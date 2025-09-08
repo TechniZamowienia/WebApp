@@ -18,7 +18,7 @@ export const Users: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
-      label: 'Imię i nazwisko',
+      label: 'Imię i nazwisko', 
     },
     {
       name: 'email',
@@ -40,3 +40,6 @@ export const Users: CollectionConfig = {
     },
   ],
 }
+
+
+

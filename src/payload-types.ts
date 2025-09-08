@@ -175,6 +175,11 @@ export interface Order {
   realisationDate?: string | null
   store?: (number | null) | Store
   description?: string | null
+  participants?:
+    | {
+        name?: string | null
+      }[]
+    | null
   updatedAt: string
   createdAt: string
 }

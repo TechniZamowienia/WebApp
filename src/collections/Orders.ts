@@ -20,5 +20,15 @@ export const Orders: CollectionConfig = {
       name: 'description',
       type: 'text',
     },
+    {
+      name: 'participants',
+      type: 'array',
+      fields: [
+        {
+          name: 'name',
+          type: 'text',
+        },
+      ],
+    },
   ],
 }

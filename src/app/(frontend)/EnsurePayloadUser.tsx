@@ -20,15 +20,12 @@ export default async function EnsurePayloadUser() {
 
     const name = clerkUser.fullName || clerkUser.username || 'Użytkownik'
 
-    // Szukaj po clerkId
     const byClerk = await payload.find({
       collection: 'users',
       where: { clerkId: { equals: clerkId } },
       limit: 1,
     })
     if (byClerk.docs?.length) return null
-
-    // Jeśli istnieje po emailu – uzupełnij clerkId
     const byEmail = await payload.find({
       collection: 'users',
       where: { email: { equals: email } },
@@ -47,13 +44,12 @@ export default async function EnsurePayloadUser() {
       return null
     }
 
-    // Utwórz nowe konto z losowym silnym hasłem (wymagane przez Payload)
     const randomPassword = `${randomBytes(24).toString('base64url')}!A9a`
 
     try {
       await payload.create({
         collection: 'users',
-        // @ts-ignore – dynamiczne pola względem wygenerowanych typów
+        // @ts-ignore
         data: {
           clerkId,
           email,
@@ -64,7 +60,6 @@ export default async function EnsurePayloadUser() {
         overrideAccess: true,
       })
     } catch (err: any) {
-      // Jeżeli nastąpi kolizja unikalności email/klucza, zignoruj próbę
       const msg = String(err?.message || '')
       if (msg.toLowerCase().includes('unique') || msg.toLowerCase().includes('duplicate')) {
         return null

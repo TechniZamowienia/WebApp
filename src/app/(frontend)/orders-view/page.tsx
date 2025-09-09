@@ -28,21 +28,21 @@ export default async function OrdersView() {
             <TableHead>Participants</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
-          <TableBody>
-            {findResult.docs.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>{order.orderNumber}</TableCell>
-                <TableCell>{order.realisationDate}</TableCell>
-                <TableCell>{(order.store as Store)?.name || ''}</TableCell>
-                <TableCell>{order.description}</TableCell>
-                <TableCell>{order.participants?.length || 0}</TableCell>
-                <TableCell>
-                  <Button>View</Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
         </TableHeader>
+        <TableBody>
+          {findResult.docs.map((order) => (
+            <TableRow key={order.id}>
+              <TableCell>{order.orderNumber}</TableCell>
+              <TableCell>{order.realisationDate}</TableCell>
+              <TableCell>{(order.store as Store)?.name || ''}</TableCell>
+              <TableCell>{order.description}</TableCell>
+              <TableCell>{order.participants?.length || 0}</TableCell>
+              <TableCell>
+                <Button>View</Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
       </Table>
     </div>
   )

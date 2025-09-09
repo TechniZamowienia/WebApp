@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 export const Users: CollectionConfig = {
   slug: 'users',
+  auth: true,
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'email', 'role', 'createdAt'],
@@ -15,10 +16,17 @@ export const Users: CollectionConfig = {
   },
   fields: [
     {
+      name: 'clerkId',
+      label: 'Clerk User ID',
+      type: 'text',
+      unique: true,
+      admin: { position: 'sidebar', description: 'Powiązanie z kontem Clerk' },
+    },
+    {
       name: 'name',
       type: 'text',
       required: true,
-      label: 'Imię i nazwisko', 
+      label: 'Imię i nazwisko',
     },
     {
       name: 'email',
@@ -40,6 +48,3 @@ export const Users: CollectionConfig = {
     },
   ],
 }
-
-
-

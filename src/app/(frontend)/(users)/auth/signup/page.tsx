@@ -5,7 +5,7 @@ import React from 'react'
 export default function SignupPage() {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', marginTop: 40 }}>
-      <SignUp signInUrl="/auth/login" afterSignUpUrl="/orders-view" />
+      <SignUp signInUrl="/auth/login" />
     </div>
   )
 }

@@ -35,6 +35,8 @@ export async function createOrder(formData: FormData) {
     storeDoc = stores.docs?.[0]
   }
 
+  const tax = formData.get('tax')
+
   await payload.create({
     collection: 'orders',
     data: {
@@ -42,6 +44,7 @@ export async function createOrder(formData: FormData) {
       store: storeDoc || selectedStoreId || undefined,
       realisationDate,
       description,
+      tax,
       participants: [],
     },
   })

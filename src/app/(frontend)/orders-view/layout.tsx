@@ -28,6 +28,7 @@ export default async function OrdersView({ children }: { children: React.ReactNo
               <TableHead>Store</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Participants</TableHead>
+              <TableHead>Tax</TableHead>
               <TableHead>
                 <SheetTrigger asChild>
                   <Button variant="outline" asChild>
@@ -45,6 +46,7 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                 <TableCell>{(order.store as Store)?.name || ''}</TableCell>
                 <TableCell>{order.description}</TableCell>
                 <TableCell>{order.participants?.length || 0}</TableCell>
+                <TableCell>{order.tax || 0}%</TableCell>
                 <TableCell>
                   <SheetTrigger asChild>
                     <Button variant="outline" asChild>

@@ -25,6 +25,7 @@ export default async function OrderViewPage({ params }: { params: { orderNumber:
         <p>{order.docs[0].realisationDate}</p>
         <p>{(order.docs[0].store as Store)?.name}</p>
         <p>{order.docs[0].participants?.map((participant) => participant.name).join(', ')}</p>
+        <p>{order.docs[0].tax || 0}% tax</p>
       </CardContent>
     </Card>
   )

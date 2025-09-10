@@ -52,6 +52,14 @@ export default function CreateOrderForm({
       {isSelectedNewStore && <Input type="text" name="newStoreName" placeholder="New Store Name" />}
       <Input type="datetime-local" name="realisationDate" placeholder="Realisation Date" />
       <Input type="text" name="description" placeholder="Description" />
+      <Input
+        type="number"
+        name="tax"
+        placeholder="Order Tax(%)"
+        step="0.1"
+        min="0"
+        max="100"
+      />
       <Button type="submit">Create Order</Button>
     </form>
   )

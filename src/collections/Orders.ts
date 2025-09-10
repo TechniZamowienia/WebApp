@@ -21,6 +21,10 @@ export const Orders: CollectionConfig = {
       type: 'text',
     },
     {
+      name: 'tax',
+      type: 'number',
+    },
+    {
       name: 'participants',
       type: 'array',
       fields: [

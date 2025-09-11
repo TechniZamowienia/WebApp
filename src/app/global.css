@@ -4,31 +4,31 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0); /* pure white */
-  --foreground: oklch(0.35 0 0); /* dark gray for text */
-  --card: oklch(0.99 0.01 85); /* light warm beige */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.35 0 0); 
+  --card: oklch(0.99 0.01 85); 
   --card-foreground: oklch(0.35 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.35 0 0);
-  --primary: oklch(0.65 0.15 45); /* vibrant orange */
+  --primary: oklch(0.65 0.15 45); 
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.72 0.18 40); /* bright orange accent */
+  --secondary: oklch(0.72 0.18 40); 
   --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.98 0.02 85); /* very light warm background */
+  --muted: oklch(0.98 0.02 85); 
   --muted-foreground: oklch(0.35 0 0);
-  --accent: oklch(0.72 0.18 40); /* bright orange for highlights */
+  --accent: oklch(0.72 0.18 40); 
   --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.55 0.25 25); /* red for errors */
+  --destructive: oklch(0.55 0.25 25); 
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.92 0.01 85); /* subtle warm borders */
+  --border: oklch(0.92 0.01 85); 
   --input: oklch(1 0 0);
-  --ring: oklch(0.65 0.15 45 / 0.5); /* orange focus ring */
+  --ring: oklch(0.65 0.15 45 / 0.5); 
   --chart-1: oklch(0.65 0.15 45);
   --chart-2: oklch(0.72 0.18 40);
   --chart-3: oklch(0.99 0.01 85);
   --chart-4: oklch(0.35 0 0);
   --chart-5: oklch(0.98 0.02 85);
-  --radius: 0.75rem; /* increased border radius for modern look */
+  --radius: 0.75rem; 
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.35 0 0);
   --sidebar-primary: oklch(0.65 0.15 45);

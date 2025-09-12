@@ -20,10 +20,10 @@ export default async function OrdersView({ children }: { children: React.ReactNo
 
         <Sheet>
           <SheetTitle className="hidden">Orders View</SheetTitle>
-          <div className="bg-card rounded-2xl shadow-lg border border-border overflow-hidden animate-scale-in">
+          <div className="bg-card/70 backdrop-blur-xl rounded-2xl shadow-lg border border-border overflow-hidden animate-scale-in">
             <Table className="w-full">
               <TableHeader>
-                <TableRow className="bg-muted/50 hover:bg-muted/70 transition-colors duration-200">
+                <TableRow className="bg-muted/60 sticky top-0 z-10 backdrop-blur-sm">
                   <TableHead className="font-semibold text-foreground">Order Number</TableHead>
                   <TableHead className="font-semibold text-foreground">Realisation Date</TableHead>
                   <TableHead className="font-semibold text-foreground">Store</TableHead>
@@ -42,21 +42,34 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="max-h-[60vh] overflow-y-auto block">
                 {findResult.docs.map((order, index) => (
                   <TableRow
                     key={order.id}
-                    className="hover:bg-muted/30 transition-all duration-200 animate-fade-in"
-                    style={{ animationDelay: `${index * 0.1}s` }}
+                    className="hover:bg-muted/30 transition-all duration-200 animate-fade-in block w-full"
+                    style={{ animationDelay: `${index * 0.05}s` }}
                   >
                     <TableCell className="font-medium text-primary">{order.orderNumber}</TableCell>
                     <TableCell className="text-muted-foreground">{order.realisationDate}</TableCell>
                     <TableCell className="font-medium">{(order.store as Store)?.name || ""}</TableCell>
                     <TableCell className="text-muted-foreground max-w-xs truncate">{order.description}</TableCell>
                     <TableCell>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20">
-                        {order.participants?.length || 0} participants
-                      </span>
+                      {(() => {
+                        const items = (order as any).items as any[] | undefined
+                        const uniqueIds = new Set<string>()
+                        if (Array.isArray(items)) {
+                          for (const it of items) {
+                            const key = String(it?.userId || it?.userName || '')
+                            if (key) uniqueIds.add(key)
+                          }
+                        }
+                        const count = uniqueIds.size || (order.participants?.length || 0)
+                        return (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20">
+                            {count} participants
+                          </span>
+                        )
+                      })()}
                     </TableCell>
                     <TableCell>
                       <SheetTrigger asChild>
@@ -66,7 +79,7 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                           className="hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 bg-transparent"
                           asChild
                         >
-                          <Link href={`/orders-view/${order.id}`}>View Details</Link>
+                          <Link href={`/orders-view/${order.orderNumber}`}>View Details</Link>
                         </Button>
                       </SheetTrigger>
                     </TableCell>

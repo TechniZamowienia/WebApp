@@ -182,6 +182,19 @@ export interface Order {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Per-user items added to this order
+   */
+  items?:
+    | {
+        name: string;
+        price: number;
+        userId: string;
+        userName: string;
+        createdAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -323,6 +336,16 @@ export interface OrdersSelect<T extends boolean = true> {
     | T
     | {
         name?: T;
+        id?: T;
+      };
+  items?:
+    | T
+    | {
+        name?: T;
+        price?: T;
+        userId?: T;
+        userName?: T;
+        createdAt?: T;
         id?: T;
       };
   updatedAt?: T;

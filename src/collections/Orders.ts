@@ -30,5 +30,26 @@ export const Orders: CollectionConfig = {
         },
       ],
     },
+    {
+      name: 'items',
+      label: 'Items',
+      type: 'array',
+      admin: {
+        description: 'Per-user items added to this order',
+      },
+      fields: [
+        { name: 'name', type: 'text', required: true },
+        {
+          name: 'price',
+          type: 'number',
+          required: true,
+          min: 0.01,
+          validate: (val: unknown) => (typeof val === 'number' && val >= 0.01 ? true : 'Cena musi być ≥ 0,01 PLN'),
+        },
+        { name: 'userId', type: 'text', required: true },
+        { name: 'userName', type: 'text', required: true },
+        { name: 'createdAt', type: 'date' },
+      ],
+    },
   ],
 }

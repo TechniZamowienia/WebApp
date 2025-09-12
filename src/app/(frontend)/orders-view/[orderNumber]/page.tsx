@@ -159,6 +159,7 @@ export default async function OrderViewPage({ params }: { params: Promise<{ orde
                         </div>
                         <span className="text-sm text-foreground font-semibold">{pln.format(Number(it.price) || 0)}</span>
                       </li>
+                      //cos
                     ))}
                   </ul>
                 )}

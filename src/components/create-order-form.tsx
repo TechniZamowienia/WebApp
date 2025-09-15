@@ -1,28 +1,37 @@
-"use client"
-import { Input } from "./ui/input"
-import { Select, SelectTrigger } from "./ui/select"
-import { SelectValue } from "./ui/select"
-import { SelectContent } from "./ui/select"
-import { SelectItem } from "./ui/select"
-import { Button } from "./ui/button"
-import { useState } from "react"
-import type { Order, Store } from "@/payload-types"
-import { createOrder } from "@/actions/create-order"
+'use client'
+import { Input } from './ui/input'
+import { Select, SelectTrigger } from './ui/select'
+import { SelectValue } from './ui/select'
+import { SelectContent } from './ui/select'
+import { SelectItem } from './ui/select'
+import { Button } from './ui/button'
+import { useState } from 'react'
+import type { Order, Store } from '@/payload-types'
+import { createOrder } from '@/actions/create-order'
+import { Loader2Icon, PlusIcon } from 'lucide-react'
 
 export default function CreateOrderForm({
   props,
 }: {
   props: { stores: Store[]; orders: Order[] }
 }) {
-  "use client"
-  const [isSelectedNewStore, setIsSelectedNewStore] = useState(false)
+  'use client'
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedStore, setSelectedStore] = useState<string | undefined>()
+  const [newStoreName, setNewStoreName] = useState<string | undefined>()
   const stores = props.stores
   const orderNumber = props.orders.length + 1
 
   return (
     <div className="animate-slide-up">
-      <form className="w-full h-full flex flex-col gap-6" action={createOrder}>
+      <form
+        className="w-full h-full flex flex-col gap-6"
+        action={async (formData) => {
+          setIsSubmitting(true)
+          await createOrder(formData)
+          setIsSubmitting(false)
+        }}
+      >
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">Order Number</label>
           <Input
@@ -41,7 +50,6 @@ export default function CreateOrderForm({
             value={selectedStore}
             onValueChange={(v) => {
               setSelectedStore(v)
-              setIsSelectedNewStore(v === "create-new")
             }}
           >
             <SelectTrigger className="w-full bg-background border-border/50 focus:border-primary transition-all duration-200 hover:bg-muted/30">
@@ -65,17 +73,19 @@ export default function CreateOrderForm({
               </SelectItem>
             </SelectContent>
           </Select>
-          <input type="hidden" name="store" value={selectedStore ?? ""} />
+          <input type="hidden" name="store" value={selectedStore ?? ''} />
         </div>
 
-        {isSelectedNewStore && (
+        {selectedStore === 'create-new' && (
           <div className="space-y-2 animate-slide-up">
             <label className="text-sm font-medium text-foreground">New Store Name</label>
             <Input
               type="text"
               name="newStoreName"
+              value={newStoreName}
               placeholder="Enter new store name"
               className="bg-background border-border/50 focus:border-primary transition-all duration-200"
+              onChange={(e) => setNewStoreName(e.target.value)}
             />
           </div>
         )}
@@ -103,8 +113,21 @@ export default function CreateOrderForm({
         <Button
           type="submit"
           className="w-full mt-6 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] bg-primary hover:bg-primary/90"
+          disabled={
+            isSubmitting || !selectedStore || (selectedStore === 'create-new' && !newStoreName)
+          }
         >
-          Create Order
+          {isSubmitting ? (
+            <>
+              <Loader2Icon className="animate-spin" />
+              Please wait
+            </>
+          ) : (
+            <>
+              <PlusIcon />
+              Create Order
+            </>
+          )}
         </Button>
       </form>
     </div>

@@ -2,7 +2,6 @@
 
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 export async function createOrder(formData: FormData) {
@@ -34,6 +33,8 @@ export async function createOrder(formData: FormData) {
     })
     storeDoc = stores.docs?.[0]
   }
+  const tax = formData.get('tax')
+  const taxType = formData.get('taxType')
 
   await payload.create({
     collection: 'orders',
@@ -43,6 +44,8 @@ export async function createOrder(formData: FormData) {
       realisationDate,
       description,
       participants: [],
+      tax: Number(tax),
+      taxType: taxType as 'percentage' | 'fixed' | null,
     },
   })
   redirect(`/orders-view/${orderNumber}`)

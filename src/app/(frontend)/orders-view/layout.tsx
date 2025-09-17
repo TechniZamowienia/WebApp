@@ -20,11 +20,6 @@ export default async function OrdersView({ children }: { children: React.ReactNo
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6 animate-fade-in">
       <div className="max-w-7xl mx-auto">
-        {/* <div className="mb-8 animate-slide-up">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Techni Zamowienia</h1>
-          <p className="text-muted-foreground text-lg">Zamów sobie cos nwm </p>
-        </div> */}
-
         <Sheet>
           <SheetTitle className="hidden">Orders View</SheetTitle>
           <div className="bg-card/70 backdrop-blur-xl rounded-2xl shadow-lg border border-border overflow-hidden animate-scale-in">
@@ -36,7 +31,8 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                   <TableHead className="font-semibold text-foreground">Store</TableHead>
                   <TableHead className="font-semibold text-foreground">Description</TableHead>
                   <TableHead className="font-semibold text-foreground">Participants</TableHead>
-                  <TableHead className="font-semibold text-foreground py-2">
+                  <TableHead className="font-semibold text-foreground">Tax</TableHead>
+                  <TableHead className="font-semibold text-foreground py-2 text-right">
                     <SheetTrigger asChild>
                       <Button
                         variant="default"
@@ -49,26 +45,20 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="max-h-[60vh] overflow-y-auto block w-full">
+              <TableBody className="max-h-[60vh] overflow-y-auto w-full">
                 {findResult.docs.map((order, index) => (
                   <TableRow
                     key={order.id}
-                    className="hover:bg-muted/30 transition-all duration-200 animate-fade-in block w-full"
+                    className="hover:bg-muted/30 transition-all duration-200 animate-fade-in w-full"
                     style={{ animationDelay: `${index * 0.05}s` }}
                   >
-                    <TableCell className="font-medium text-primary w-full">
-                      {order.orderNumber}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground w-full">
-                      {order.realisationDate}
-                    </TableCell>
-                    <TableCell className="font-medium w-full">
+                    <TableCell className="font-medium text-primary">{order.orderNumber}</TableCell>
+                    <TableCell className="text-muted-foreground">{order.realisationDate}</TableCell>
+                    <TableCell className="font-medium">
                       {(order.store as Store)?.name || ''}
                     </TableCell>
-                    <TableCell className="text-muted-foreground w-full">
-                      {order.description}
-                    </TableCell>
-                    <TableCell className="w-full">
+                    <TableCell className="text-muted-foreground">{order.description}</TableCell>
+                    <TableCell>
                       {(() => {
                         const items = (order as any).items as any[] | undefined
                         const uniqueIds = new Set<string>()
@@ -86,7 +76,8 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                         )
                       })()}
                     </TableCell>
-                    <TableCell className="w-full">
+                    <TableCell className="">{order.tax || '0'}</TableCell>
+                    <TableCell className="text-right">
                       <SheetTrigger asChild>
                         <Button
                           variant="outline"

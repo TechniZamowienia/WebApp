@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { currentUser } from '@clerk/nextjs/server'
 
 export async function createOrder(formData: FormData) {
   const payload = await getPayload({ config })
@@ -43,6 +44,20 @@ export async function createOrder(formData: FormData) {
       realisationDate,
       description,
       participants: [],
+      // @ts-ignore founder jest nowym polem dodanym w kolekcji Orders
+      // founder: bieżący użytkownik Payload powiązany przez clerkId
+      founder: await (async () => {
+        const cu = await currentUser()
+        const clerkId = cu?.id
+        if (!clerkId) return undefined
+        const u = await payload.find({
+          collection: 'users',
+          where: { clerkId: { equals: clerkId } },
+          limit: 1,
+        })
+        const doc = u.docs?.[0] as any
+        return doc?.id ? String(doc.id) : undefined
+      })(),
     },
   })
   redirect(`/orders-view/${orderNumber}`)

@@ -37,15 +37,20 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                   <TableHead className="font-semibold text-foreground">Description</TableHead>
                   <TableHead className="font-semibold text-foreground">Participants</TableHead>
                   <TableHead className="font-semibold text-foreground py-2">
-                    <SheetTrigger asChild>
-                      <Button
-                        variant="default"
-                        className="shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-                        asChild
-                      >
-                        <Link href="/orders-view/create">+ Create Order</Link>
+                    <div className="flex gap-2 justify-end">
+                      <SheetTrigger asChild>
+                        <Button
+                          variant="default"
+                          className="shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                          asChild
+                        >
+                          <Link href="/orders-view/create">+ Create Order</Link>
+                        </Button>
+                      </SheetTrigger>
+                      <Button variant="outline" asChild>
+                        <Link href="/history">History</Link>
                       </Button>
-                    </SheetTrigger>
+                    </div>
                   </TableHead>
                 </TableRow>
               </TableHeader>

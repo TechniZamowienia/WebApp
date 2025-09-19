@@ -1,5 +1,5 @@
-"use client"
-import { SignUp } from "@clerk/nextjs"
+'use client'
+import { SignUp } from '@clerk/nextjs'
 
 export default function SignupPage() {
   return (
@@ -11,16 +11,19 @@ export default function SignupPage() {
         </div>
         <div className="bg-card rounded-2xl shadow-lg border border-border p-2 animate-scale-in">
           <SignUp
+            routing="hash"
             signInUrl="/auth/login"
             appearance={{
               elements: {
-                rootBox: "w-full",
-                card: "bg-transparent shadow-none border-none",
-                headerTitle: "text-foreground",
-                headerSubtitle: "text-muted-foreground",
-                socialButtonsBlockButton: "bg-background border-border hover:bg-muted transition-colors duration-200",
-                formButtonPrimary: "bg-primary hover:bg-primary/90 transition-colors duration-200",
-                footerActionLink: "text-primary hover:text-primary/80 transition-colors duration-200",
+                rootBox: 'w-full',
+                card: 'bg-transparent shadow-none border-none',
+                headerTitle: 'text-foreground',
+                headerSubtitle: 'text-muted-foreground',
+                socialButtonsBlockButton:
+                  'bg-background border-border hover:bg-muted transition-colors duration-200',
+                formButtonPrimary: 'bg-primary hover:bg-primary/90 transition-colors duration-200',
+                footerActionLink:
+                  'text-primary hover:text-primary/80 transition-colors duration-200',
               },
             }}
           />

@@ -18,7 +18,7 @@ export default function CreateOrderForm({
   'use client'
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedStore, setSelectedStore] = useState<string | undefined>()
-  const [newStoreName, setNewStoreName] = useState<string | undefined>()
+  const [newStoreName, setNewStoreName] = useState<string>('')
   const stores = props.stores
   const orderNumber = props.orders.length + 1
 

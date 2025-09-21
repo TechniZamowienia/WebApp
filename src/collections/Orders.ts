@@ -4,6 +4,12 @@ export const Orders: CollectionConfig = {
   slug: 'orders',
   fields: [
     {
+      name: 'founder',
+      type: 'relationship',
+      relationTo: 'users',
+      admin: { position: 'sidebar', description: 'Założyciel' },
+    },
+    {
       name: 'orderNumber',
       type: 'number',
     },

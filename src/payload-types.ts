@@ -172,6 +172,10 @@ export interface Media {
  */
 export interface Order {
   id: number;
+  /**
+   * Założyciel
+   */
+  founder?: (number | null) | User;
   orderNumber?: number | null;
   realisationDate?: string | null;
   store?: (number | null) | Store;
@@ -330,6 +334,7 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "orders_select".
  */
 export interface OrdersSelect<T extends boolean = true> {
+  founder?: T;
   orderNumber?: T;
   realisationDate?: T;
   store?: T;

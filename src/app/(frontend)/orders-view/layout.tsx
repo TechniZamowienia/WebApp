@@ -19,7 +19,7 @@ export default async function OrdersView({ children }: { children: React.ReactNo
   const findResult = await payload.find({ collection: 'orders' })
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6 animate-fade-in">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto flex flex-col gap-4">
         {/* <div className="mb-8 animate-slide-up">
           <h1 className="text-4xl font-bold text-foreground mb-2">Techni Zamowienia</h1>
           <p className="text-muted-foreground text-lg">Zamów sobie cos nwm </p>
@@ -31,49 +31,56 @@ export default async function OrdersView({ children }: { children: React.ReactNo
             <Table className="w-full">
               <TableHeader>
                 <TableRow className="bg-muted/60 sticky z-10 backdrop-blur-sm">
-                  <TableHead className="font-semibold text-foreground">Order Number</TableHead>
-                  <TableHead className="font-semibold text-foreground">Realisation Date</TableHead>
-                  <TableHead className="font-semibold text-foreground">Store</TableHead>
-                  <TableHead className="font-semibold text-foreground">Description</TableHead>
-                  <TableHead className="font-semibold text-foreground">Participants</TableHead>
-                  <TableHead className="font-semibold text-foreground py-2">
-                    <div className="flex gap-2 justify-end">
-                      <SheetTrigger asChild>
-                        <Button
-                          variant="default"
-                          className="shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-                          asChild
-                        >
-                          <Link href="/orders-view/create">+ Create Order</Link>
-                        </Button>
-                      </SheetTrigger>
+                  <TableHead className="font-semibold text-foreground text-left">
+                    Order Number
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">
+                    Realisation Date
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">Store</TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">
+                    Description
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">
+                    Participants
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground py-2 text-right">
+                    <SheetTrigger asChild>
                       <Button variant="outline" asChild>
                         <Link href="/history">History</Link>
                       </Button>
-                    </div>
+                    </SheetTrigger>
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="max-h-[60vh] overflow-y-auto block w-full">
+              <TableBody className="max-h-[60vh] overflow-y-auto w-full">
                 {findResult.docs.map((order, index) => (
                   <TableRow
                     key={order.id}
-                    className="hover:bg-muted/30 transition-all duration-200 animate-fade-in block w-full"
+                    className="hover:bg-muted/30 transition-all duration-200 animate-fade-in w-full"
                     style={{ animationDelay: `${index * 0.05}s` }}
                   >
-                    <TableCell className="font-medium text-primary w-full">
+                    <TableCell className="font-medium text-primary text-left">
                       {order.orderNumber}
                     </TableCell>
-                    <TableCell className="text-muted-foreground w-full">
-                      {order.realisationDate}
+                    <TableCell className="text-muted-foreground text-center">
+                      {order.realisationDate
+                        ? new Date(order.realisationDate).toLocaleDateString('pl-PL', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '-'}
                     </TableCell>
-                    <TableCell className="font-medium w-full">
-                      {(order.store as Store)?.name || ''}
+                    <TableCell className="font-medium text-center">
+                      {(order.store as Store)?.name || '-'}
                     </TableCell>
-                    <TableCell className="text-muted-foreground w-full">
-                      {order.description}
+                    <TableCell className="text-muted-foreground w-full text-center ">
+                      {order.description || '-'}
                     </TableCell>
-                    <TableCell className="w-full">
+                    <TableCell className="w-full text-center">
                       {(() => {
                         const items = (order as any).items as any[] | undefined
                         const uniqueIds = new Set<string>()
@@ -91,7 +98,7 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                         )
                       })()}
                     </TableCell>
-                    <TableCell className="w-full">
+                    <TableCell className="w-full text-right">
                       <SheetTrigger asChild>
                         <Button
                           variant="outline"
@@ -108,6 +115,18 @@ export default async function OrdersView({ children }: { children: React.ReactNo
               </TableBody>
             </Table>
           </div>
+          <div className="flex gap-2 justify-end">
+            <SheetTrigger asChild>
+              <Button
+                variant="default"
+                className="shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                asChild
+              >
+                <Link href="/orders-view/create">+ Create Order</Link>
+              </Button>
+            </SheetTrigger>
+          </div>
+
           <SheetContent className="w-full h-full p-8 bg-background border-l border-border">
             <div className="animate-slide-up">{children}</div>
           </SheetContent>

@@ -5,11 +5,12 @@ import { ThemeProvider } from '@/components/theme-provider'
 import EnsurePayloadUser from './EnsurePayloadUser'
 import AuthGate from './AuthGate'
 import { ClerkProvider } from '@clerk/nextjs'
+import { plPL } from '@clerk/localizations'
 import { currentUser } from '@clerk/nextjs/server'
 
 export const metadata = {
-  description: 'A blank template using Payload in a Next.js app.',
-  title: 'Payload Blank Template',
+  description: 'Szablon aplikacji z Payload i Next.js.',
+  title: 'Techniczne Zamówienia',
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
@@ -20,9 +21,9 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   ).trim()
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pl" suppressHydrationWarning>
       <body>
-        <ClerkProvider>
+  <ClerkProvider localization={plPL}>
           <AuthGate />
           <EnsurePayloadUser />
           <ThemeProvider

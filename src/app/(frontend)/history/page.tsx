@@ -68,7 +68,15 @@ export default async function HistoriaPage() {
               {(createdByMeDocs || []).map((o: any) => (
                 <TableRow key={o.id}>
                   <TableCell>{o.orderNumber}</TableCell>
-                  <TableCell>{o.realisationDate}</TableCell>
+                  <TableCell>
+                    {o.realisationDate
+                      ? new Date(o.realisationDate).toLocaleDateString('pl-PL', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                        })
+                      : '-'}
+                  </TableCell>
                   <TableCell>{(o.store as any)?.name || ''}</TableCell>
                   <TableCell>{o.description}</TableCell>
                   <TableCell>
@@ -100,7 +108,15 @@ export default async function HistoriaPage() {
               {tookPart.map((o: any) => (
                 <TableRow key={o.id}>
                   <TableCell>{o.orderNumber}</TableCell>
-                  <TableCell>{o.realisationDate}</TableCell>
+                  <TableCell>
+                    {o.realisationDate
+                      ? new Date(o.realisationDate).toLocaleDateString('pl-PL', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                        })
+                      : '-'}
+                  </TableCell>
                   <TableCell>{(o.store as any)?.name || ''}</TableCell>
                   <TableCell>{o.description}</TableCell>
                   <TableCell>

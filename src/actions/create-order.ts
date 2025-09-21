@@ -25,6 +25,7 @@ export async function createOrder(formData: FormData) {
   const realisationDate = (
     formData.get('realisationDate')?.toString() || new Date().toISOString()
   ).trim()
+  const distributionUntil = (formData.get('distributionUntil')?.toString() || '').trim()
   const description = (formData.get('description')?.toString() || '').trim()
 
   let storeId: number | undefined = undefined
@@ -48,6 +49,7 @@ export async function createOrder(formData: FormData) {
       orderNumber: Number(orderNumber),
       store: storeId,
       realisationDate,
+  distributionUntil: distributionUntil || undefined,
       description,
       participants: [],
       // @ts-ignore founder jest nowym polem dodanym w kolekcji Orders

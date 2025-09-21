@@ -9,6 +9,8 @@ import { addOrderItem, getUserItemSuggestions } from '@/actions/add-order-item'
 import { Input } from '@/components/ui/input'
 import { setCartLocation } from '@/actions/set-cart-location'
 import { currentUser } from '@clerk/nextjs/server'
+import { removeOrderUser } from '@/actions/remove-order-user'
+import { Trash2Icon } from 'lucide-react'
 
 export default async function OrderViewPage({
   params,
@@ -58,9 +60,13 @@ export default async function OrderViewPage({
     new Map(
       items
         .filter((it: any) => it?.userId || it?.userName)
-        .map((it: any) => [String(it.userId || it.userName), String(it.userName || 'Użytkownik')]),
+        .map((it: any) => {
+          const id = String(it.userId || it.userName)
+          const name = String(it.userName || 'Użytkownik')
+          return [id, { id, name }]
+        }),
     ).values(),
-  ).map((name) => ({ name }))
+  )
 
   const cu = await currentUser()
   const viewerId = cu?.id || null
@@ -68,17 +74,50 @@ export default async function OrderViewPage({
   const yourCart = viewerId ? carts.find((c) => c?.userId === viewerId) : null
   const yourLocation = yourCart?.location || ''
 
+  const viewerUserRes = viewerId
+    ? await payload.find({ collection: 'users', where: { clerkId: { equals: viewerId } }, limit: 1 })
+    : null
+  const viewerPayloadId: number | undefined = (viewerUserRes?.docs?.[0] as any)?.id
+  const founderId: number | undefined =
+    typeof doc.founder === 'number' ? doc.founder : (doc.founder as any)?.id
+  const isFounder = !!viewerPayloadId && !!founderId && viewerPayloadId === founderId
+
+  // Compute founder's Clerk ID to match against item.userId / cart.userId
+  const founderClerkId: string | null = await (async () => {
+    if (!doc?.founder) return null
+    if (typeof doc.founder === 'object' && (doc.founder as any)?.clerkId) {
+      return (doc.founder as any).clerkId as string
+    }
+    if (typeof doc.founder === 'number') {
+      const fr = await payload.find({
+        collection: 'users',
+        where: { id: { equals: doc.founder } },
+        limit: 1,
+      })
+      return ((fr.docs?.[0] as any)?.clerkId as string) || null
+    }
+    return null
+  })()
+
+  const now = new Date()
+  const isExpired = !!doc.distributionUntil && new Date(doc.distributionUntil) <= now
+
   return (
     <div className="animate-fade-in">
-      <Card className="w-full border-0 shadow-xl bg-card/50 backdrop-blur-sm">
+  <Card className="w-full border-0 shadow-xl bg-card/50 backdrop-blur-sm">
         <CardHeader className="pb-6">
           <div className="flex items-start justify-between gap-4">
             <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-3">
               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
                 <span className="text-primary-foreground font-bold">#</span>
               </div>
-              Order #{doc.orderNumber}
+              Ogłoszenie #{doc.orderNumber}
             </CardTitle>
+            {isExpired && (
+              <span className="text-xs px-2 py-1 rounded-md bg-destructive/10 text-destructive border border-destructive/20">
+                Ogłoszenie wygasło
+              </span>
+            )}
             {/* dev */}
             <div className="flex items-center gap-3">
               {items.length > 0 && (
@@ -96,7 +135,7 @@ export default async function OrderViewPage({
                 }}
               >
                 <Button type="submit" variant="destructive" size="sm" className="hover:shadow-md">
-                  Delete
+                  Usuń
                 </Button>
               </form>
             </div>
@@ -188,6 +227,7 @@ export default async function OrderViewPage({
                   <Button
                     type="submit"
                     className="h-10 px-6 justify-self-start sm:justify-self-auto"
+                    disabled={isExpired}
                   >
                     Dodaj
                   </Button>
@@ -231,15 +271,34 @@ export default async function OrderViewPage({
                     (uniqueParticipantsFromItems.length > 0
                       ? uniqueParticipantsFromItems
                       : participants
-                    ).map((p: any, index: number) => (
+          ).map((p: any, index: number) => (
                       <span
-                        key={p?.id || p?.name || index}
+                        key={p?.id || `${p?.name}-${index}`}
                         className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border bg-card/60"
                       >
                         <span className="inline-flex items-center justify-center size-5 rounded-full bg-primary/15 text-primary text-[10px] font-bold">
                           {(p?.name || 'U')?.slice(0, 1).toUpperCase()}
                         </span>
-                        {p?.name || '—'}
+                        <span className="flex items-center gap-2">
+                          <span>
+                            {p?.name || '—'}
+                            {p?.id && founderClerkId && p.id === founderClerkId && (
+                              <span className="text-muted-foreground"> (założyciel)</span>
+                            )}
+                          </span>
+                          {isFounder && p?.id && p.id !== viewerId && (
+                            <form
+                              action={async () => {
+                                'use server'
+                                await removeOrderUser(Number(orderNumber), String(p.id))
+                              }}
+                            >
+                              <Button type="submit" size="icon" variant="destructive" className="size-6">
+                                <Trash2Icon className="size-4" />
+                              </Button>
+                            </form>
+                          )}
+                        </span>
                       </span>
                     ))
                   ) : (
@@ -270,7 +329,9 @@ export default async function OrderViewPage({
                         defaultValue={yourLocation}
                       />
                     </div>
-                    <Button type="submit" className="w-full">Zapisz miejsce</Button>
+                    <Button type="submit" className="w-full" disabled={isExpired}>
+                      Zapisz miejsce
+                    </Button>
                     {yourCart?.userName && (
                       <p className="text-xs text-muted-foreground">
                         Koszyk: <span className="font-medium">{yourCart.userName}</span>
@@ -301,10 +362,15 @@ export default async function OrderViewPage({
                               {c?.userName || 'Użytkownik'}
                             </span>
                           </div>
-                          <span className="text-xs text-muted-foreground">
-                            {c?.location || '—'}
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted-foreground">
+                              {c?.location || '—'}
+                            </span>
+                          </div>
                         </div>
+                        {founderClerkId && c?.userId === founderClerkId && (
+                          <div className="pl-8 text-xs text-muted-foreground">(założyciel)</div>
+                        )}
                       </li>
                     ))}
                   </ul>

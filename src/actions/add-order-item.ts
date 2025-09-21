@@ -26,7 +26,6 @@ export async function addOrderItem(orderNumber: number, formData: FormData) {
   const doc = found.docs?.[0]
   if (!doc) return
 
-  // Make sure the user has a cart created (location can be set later)
   await ensureUserCart(orderNumber)
 
   const nextItems = Array.isArray(doc.items) ? [...doc.items] : []

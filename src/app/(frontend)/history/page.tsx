@@ -50,84 +50,190 @@ export default async function HistoriaPage() {
   })
 
   return (
-    <div className="p-6 space-y-8">
-      <div>
-        <h2 className="text-2xl font-semibold mb-3">Moje ogłoszenia</h2>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Numer</TableHead>
-                <TableHead>Data realizacji</TableHead>
-                <TableHead>Sklep</TableHead>
-                <TableHead>Opis</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(createdByMeDocs || []).map((o: any) => (
-                <TableRow key={o.id}>
-                  <TableCell>{o.orderNumber}</TableCell>
-                  <TableCell>
-                    {o.realisationDate
-                      ? new Date(o.realisationDate).toLocaleDateString('pl-PL', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                        })
-                      : '-'}
-                  </TableCell>
-                  <TableCell>{(o.store as any)?.name || ''}</TableCell>
-                  <TableCell>{o.description}</TableCell>
-                  <TableCell>
-                    <Button variant="outline" asChild>
-                      <Link href={`/orders-view/${o.orderNumber}`}>Szczegóły</Link>
-                    </Button>
-                  </TableCell>
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6 animate-fade-in">
+      <div className="max-w-7xl mx-auto flex flex-col gap-8">
+        <div>
+          <h2 className="text-3xl font-bold mb-6 text-foreground">Moje ogłoszenia</h2>
+          <div className="bg-card/70 backdrop-blur-xl rounded-2xl shadow-lg border border-border overflow-hidden animate-scale-in">
+            <Table className="w-full">
+              <TableHeader>
+                <TableRow className="bg-muted/60 sticky z-10 backdrop-blur-sm">
+                  <TableHead className="font-semibold text-foreground text-left">
+                    Numer ogłoszenia
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">
+                    Data realizacji
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">Sklep</TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">Opis</TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">
+                    Status
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">
+                    Uczestnicy
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground py-2 text-right">
+                    Akcje
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody className="max-h-[60vh] overflow-y-auto w-full">
+                {(createdByMeDocs || []).map((o: any, index: number) => (
+                  <TableRow
+                    key={o.id}
+                    className="hover:bg-muted/30 transition-all duration-200 animate-fade-in w-full"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <TableCell className="font-medium text-primary text-left">
+                      {o.orderNumber}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-center">
+                      {o.realisationDate
+                        ? new Date(o.realisationDate).toLocaleDateString('pl-PL', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '-'}
+                    </TableCell>
+                    <TableCell className="font-medium text-center">
+                      {(o.store as any)?.name || '-'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground w-full text-center">
+                      {o.description || '-'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-600 border border-red-500/20">
+                        Moje Ogłoszenie
+                      </span>
+                    </TableCell>
+                    <TableCell className="w-full text-center">
+                      {(() => {
+                        const items = (o as any).items as any[] | undefined
+                        const uniqueIds = new Set<string>()
+                        if (Array.isArray(items)) {
+                          for (const it of items) {
+                            const key = String(it?.userId || it?.userName || '')
+                            if (key) uniqueIds.add(key)
+                          }
+                        }
+                        const count = uniqueIds.size || o.participants?.length || 0
+                        return (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20">
+                            {count} uczestników
+                          </span>
+                        )
+                      })()}
+                    </TableCell>
+                    <TableCell className="w-full text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 bg-transparent"
+                        asChild
+                      >
+                        <Link href={`/orders-view/${o.orderNumber}`}>Szczegóły</Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-      </div>
 
-      <div>
-        <h2 className="text-2xl font-semibold mb-3">W których brałem udział</h2>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Numer</TableHead>
-                <TableHead>Data realizacji</TableHead>
-                <TableHead>Sklep</TableHead>
-                <TableHead>Opis</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tookPart.map((o: any) => (
-                <TableRow key={o.id}>
-                  <TableCell>{o.orderNumber}</TableCell>
-                  <TableCell>
-                    {o.realisationDate
-                      ? new Date(o.realisationDate).toLocaleDateString('pl-PL', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                        })
-                      : '-'}
-                  </TableCell>
-                  <TableCell>{(o.store as any)?.name || ''}</TableCell>
-                  <TableCell>{o.description}</TableCell>
-                  <TableCell>
-                    <Button variant="outline" asChild>
-                      <Link href={`/orders-view/${o.orderNumber}`}>Szczegóły</Link>
-                    </Button>
-                  </TableCell>
+        <div>
+          <h2 className="text-3xl font-bold mb-6 text-foreground">W których brałem udział</h2>
+          <div className="bg-card/70 backdrop-blur-xl rounded-2xl shadow-lg border border-border overflow-hidden animate-scale-in">
+            <Table className="w-full">
+              <TableHeader>
+                <TableRow className="bg-muted/60 sticky z-10 backdrop-blur-sm">
+                  <TableHead className="font-semibold text-foreground text-left">
+                    Numer ogłoszenia
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">
+                    Data realizacji
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">Sklep</TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">Opis</TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">
+                    Status
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">
+                    Uczestnicy
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground py-2 text-right">
+                    Akcje
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody className="max-h-[60vh] overflow-y-auto w-full">
+                {tookPart.map((o: any, index: number) => (
+                  <TableRow
+                    key={o.id}
+                    className="hover:bg-muted/30 transition-all duration-200 animate-fade-in w-full"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <TableCell className="font-medium text-primary text-left">
+                      {o.orderNumber}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-center">
+                      {o.realisationDate
+                        ? new Date(o.realisationDate).toLocaleDateString('pl-PL', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '-'}
+                    </TableCell>
+                    <TableCell className="font-medium text-center">
+                      {(o.store as any)?.name || '-'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground w-full text-center">
+                      {o.description || '-'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                        Wzięto udział
+                      </span>
+                    </TableCell>
+                    <TableCell className="w-full text-center">
+                      {(() => {
+                        const items = (o as any).items as any[] | undefined
+                        const uniqueIds = new Set<string>()
+                        if (Array.isArray(items)) {
+                          for (const it of items) {
+                            const key = String(it?.userId || it?.userName || '')
+                            if (key) uniqueIds.add(key)
+                          }
+                        }
+                        const count = uniqueIds.size || o.participants?.length || 0
+                        return (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20">
+                            {count} uczestników
+                          </span>
+                        )
+                      })()}
+                    </TableCell>
+                    <TableCell className="w-full text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 bg-transparent"
+                        asChild
+                      >
+                        <Link href={`/orders-view/${o.orderNumber}`}>Szczegóły</Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
     </div>

@@ -17,7 +17,15 @@ import { currentUser } from '@clerk/nextjs/server'
 
 export default async function OrdersView({ children }: { children: React.ReactNode }) {
   const payload = await getPayload({ config: config })
-  const findResult = await payload.find({ collection: 'orders' })
+  const findResultRaw = await payload.find({ collection: 'orders', limit: 500 })
+  const nowISO = new Date().toISOString()
+  const findResult = {
+    ...findResultRaw,
+    docs: (findResultRaw.docs || []).filter((o: any) => {
+      const until = (o as any).distributionUntil as string | undefined
+      return !until || until > nowISO
+    }),
+  }
 
   // Viewer context
   const cu = await currentUser()
@@ -35,31 +43,31 @@ export default async function OrdersView({ children }: { children: React.ReactNo
         </div> */}
 
         <Sheet>
-          <SheetTitle className="hidden">Orders View</SheetTitle>
+          <SheetTitle className="hidden">Przegląd ogłoszeń</SheetTitle>
           <div className="bg-card/70 backdrop-blur-xl rounded-2xl shadow-lg border border-border overflow-hidden animate-scale-in">
             <Table className="w-full">
               <TableHeader>
                 <TableRow className="bg-muted/60 sticky z-10 backdrop-blur-sm">
                   <TableHead className="font-semibold text-foreground text-left">
-                    Order Number
+                    Numer ogłoszenia
                   </TableHead>
                   <TableHead className="font-semibold text-foreground text-center">
-                    Realisation Date
+                    Data realizacji
                   </TableHead>
-                  <TableHead className="font-semibold text-foreground text-center">Store</TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">Sklep</TableHead>
                   <TableHead className="font-semibold text-foreground text-center">
-                    Description
+                    Opis
                   </TableHead>
                   <TableHead className="font-semibold text-foreground text-center">
                     Status
                   </TableHead>
                   <TableHead className="font-semibold text-foreground text-center">
-                    Participants
+                    Uczestnicy
                   </TableHead>
                   <TableHead className="font-semibold text-foreground py-2 text-right">
                     <SheetTrigger asChild>
                       <Button variant="outline" asChild>
-                        <Link href="/history">History</Link>
+                        <Link href="/history">Historia</Link>
                       </Button>
                     </SheetTrigger>
                   </TableHead>
@@ -126,7 +134,7 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                         const count = uniqueIds.size || order.participants?.length || 0
                         return (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20">
-                            {count} participants
+                            {count} uczestników
                           </span>
                         )
                       })()}
@@ -139,7 +147,7 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                           className="hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 bg-transparent"
                           asChild
                         >
-                          <Link href={`/orders-view/${order.orderNumber}`}>View Details</Link>
+                          <Link href={`/orders-view/${order.orderNumber}`}>Szczegóły</Link>
                         </Button>
                       </SheetTrigger>
                     </TableCell>
@@ -155,7 +163,7 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                 className="shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
                 asChild
               >
-                <Link href="/orders-view/create">+ Create Order</Link>
+                <Link href="/orders-view/create">+ Utwórz ogłoszenie</Link>
               </Button>
             </SheetTrigger>
           </div>

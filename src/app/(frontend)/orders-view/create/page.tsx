@@ -15,9 +15,9 @@ export default async function CreateOrderPage() {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">+</span>
             </div>
-            Create New Order
+            Utwórz nowe ogłoszenie
           </CardTitle>
-          <p className="text-muted-foreground mt-2">Fill in the details below to create a new order</p>
+          <p className="text-muted-foreground mt-2">Uzupełnij dane poniżej, aby utworzyć nowe ogłoszenie</p>
         </CardHeader>
         <CardContent className="pt-0">
           <CreateOrderForm props={{ stores: stores.docs, orders: orders.docs }} />

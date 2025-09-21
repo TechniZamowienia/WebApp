@@ -13,10 +13,19 @@ import { Button } from '@/components/ui/button'
 import type { Store } from '@/payload-types'
 import Link from 'next/link'
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { currentUser } from '@clerk/nextjs/server'
 
 export default async function OrdersView({ children }: { children: React.ReactNode }) {
   const payload = await getPayload({ config: config })
   const findResult = await payload.find({ collection: 'orders' })
+
+  // Viewer context
+  const cu = await currentUser()
+  const viewerClerkId = cu?.id || null
+  const viewerUserRes = viewerClerkId
+    ? await payload.find({ collection: 'users', where: { clerkId: { equals: viewerClerkId } }, limit: 1 })
+    : null
+  const viewerPayloadId: number | undefined = (viewerUserRes?.docs?.[0] as any)?.id
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6 animate-fade-in">
       <div className="max-w-7xl mx-auto flex flex-col gap-4">
@@ -40,6 +49,9 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                   <TableHead className="font-semibold text-foreground text-center">Store</TableHead>
                   <TableHead className="font-semibold text-foreground text-center">
                     Description
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-center">
+                    Status
                   </TableHead>
                   <TableHead className="font-semibold text-foreground text-center">
                     Participants
@@ -79,6 +91,27 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                     </TableCell>
                     <TableCell className="text-muted-foreground w-full text-center ">
                       {order.description || '-'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {(() => {
+                        const founderId: number | undefined =
+                          typeof (order as any).founder === 'number'
+                            ? ((order as any).founder as number)
+                            : ((order as any).founder as any)?.id
+                        const isMine = !!viewerPayloadId && !!founderId && founderId === viewerPayloadId
+                        const carts = Array.isArray((order as any).carts) ? ((order as any).carts as any[]) : []
+                        const hasCart = !!viewerClerkId && carts.some((c) => c?.userId === viewerClerkId)
+                        const badge = isMine
+                          ? { text: 'Moje Ogłoszenie', cls: 'bg-red-500/10 text-red-600 border border-red-500/20' }
+                          : hasCart
+                          ? { text: 'Wzięto udział', cls: 'bg-amber-500/10 text-amber-600 border border-amber-500/20' }
+                          : { text: 'Dostępne', cls: 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' }
+                        return (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.cls}`}>
+                            {badge.text}
+                          </span>
+                        )
+                      })()}
                     </TableCell>
                     <TableCell className="w-full text-center">
                       {(() => {

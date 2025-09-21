@@ -24,7 +24,6 @@ export default buildConfig({
   },
   collections: [Users, Media, Orders, Store],
   editor: lexicalEditor(),
-  // Provide a safe default secret for local dev to avoid startup errors/timeouts
   secret: process.env.PAYLOAD_SECRET || 'dev-secret-change-me',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
@@ -33,7 +32,6 @@ export default buildConfig({
     client: {
       url:
         process.env.DATABASE_URI ||
-        // Default to file-based SQLite in ./.payload/data.db for local dev
         `file:${path.resolve(dirname, '../.payload/data.db')}`,
     },
   }),

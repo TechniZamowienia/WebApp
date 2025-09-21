@@ -47,7 +47,6 @@ export async function setCartLocation(orderNumber: number, formData: FormData) {
 }
 
 export async function ensureUserCart(orderNumber: number) {
-  // Creates a cart with empty location if missing. Returns the cart.
   const { userId } = await auth()
   if (!userId) return null as any
   const payload = await getPayload({ config })

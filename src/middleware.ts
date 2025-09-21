@@ -6,7 +6,6 @@ const isPublicRoute = createRouteMatcher([
   '/api(.*)',
   '/payload(.*)',
   '/admin(.*)',
-  // Allow Next internal action endpoints
   '/__NEXT(.*)'
 ])
 

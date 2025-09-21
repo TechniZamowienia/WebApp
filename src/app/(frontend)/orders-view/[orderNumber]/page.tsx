@@ -9,6 +9,8 @@ import { addOrderItem, getUserItemSuggestions } from '@/actions/add-order-item'
 import { Input } from '@/components/ui/input'
 import { setCartLocation } from '@/actions/set-cart-location'
 import { currentUser } from '@clerk/nextjs/server'
+import { removeOrderUser } from '@/actions/remove-order-user'
+import { Trash2Icon } from 'lucide-react'
 
 export default async function OrderViewPage({
   params,
@@ -58,15 +60,44 @@ export default async function OrderViewPage({
     new Map(
       items
         .filter((it: any) => it?.userId || it?.userName)
-        .map((it: any) => [String(it.userId || it.userName), String(it.userName || 'Użytkownik')]),
+        .map((it: any) => {
+          const id = String(it.userId || it.userName)
+          const name = String(it.userName || 'Użytkownik')
+          return [id, { id, name }]
+        }),
     ).values(),
-  ).map((name) => ({ name }))
+  )
 
   const cu = await currentUser()
   const viewerId = cu?.id || null
   const carts: any[] = Array.isArray((doc as any).carts) ? (doc as any).carts : []
   const yourCart = viewerId ? carts.find((c) => c?.userId === viewerId) : null
   const yourLocation = yourCart?.location || ''
+
+  const viewerUserRes = viewerId
+    ? await payload.find({ collection: 'users', where: { clerkId: { equals: viewerId } }, limit: 1 })
+    : null
+  const viewerPayloadId: number | undefined = (viewerUserRes?.docs?.[0] as any)?.id
+  const founderId: number | undefined =
+    typeof doc.founder === 'number' ? doc.founder : (doc.founder as any)?.id
+  const isFounder = !!viewerPayloadId && !!founderId && viewerPayloadId === founderId
+
+  // Compute founder's Clerk ID to match against item.userId / cart.userId
+  const founderClerkId: string | null = await (async () => {
+    if (!doc?.founder) return null
+    if (typeof doc.founder === 'object' && (doc.founder as any)?.clerkId) {
+      return (doc.founder as any).clerkId as string
+    }
+    if (typeof doc.founder === 'number') {
+      const fr = await payload.find({
+        collection: 'users',
+        where: { id: { equals: doc.founder } },
+        limit: 1,
+      })
+      return ((fr.docs?.[0] as any)?.clerkId as string) || null
+    }
+    return null
+  })()
 
   return (
     <div className="animate-fade-in">
@@ -231,15 +262,34 @@ export default async function OrderViewPage({
                     (uniqueParticipantsFromItems.length > 0
                       ? uniqueParticipantsFromItems
                       : participants
-                    ).map((p: any, index: number) => (
+          ).map((p: any, index: number) => (
                       <span
-                        key={p?.id || p?.name || index}
+                        key={p?.id || `${p?.name}-${index}`}
                         className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border bg-card/60"
                       >
                         <span className="inline-flex items-center justify-center size-5 rounded-full bg-primary/15 text-primary text-[10px] font-bold">
                           {(p?.name || 'U')?.slice(0, 1).toUpperCase()}
                         </span>
-                        {p?.name || '—'}
+                        <span className="flex items-center gap-2">
+                          <span>
+                            {p?.name || '—'}
+                            {p?.id && founderClerkId && p.id === founderClerkId && (
+                              <span className="text-muted-foreground"> (założyciel)</span>
+                            )}
+                          </span>
+                          {isFounder && p?.id && p.id !== viewerId && (
+                            <form
+                              action={async () => {
+                                'use server'
+                                await removeOrderUser(Number(orderNumber), String(p.id))
+                              }}
+                            >
+                              <Button type="submit" size="icon" variant="destructive" className="size-6">
+                                <Trash2Icon className="size-4" />
+                              </Button>
+                            </form>
+                          )}
+                        </span>
                       </span>
                     ))
                   ) : (
@@ -301,10 +351,15 @@ export default async function OrderViewPage({
                               {c?.userName || 'Użytkownik'}
                             </span>
                           </div>
-                          <span className="text-xs text-muted-foreground">
-                            {c?.location || '—'}
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted-foreground">
+                              {c?.location || '—'}
+                            </span>
+                          </div>
                         </div>
+                        {founderClerkId && c?.userId === founderClerkId && (
+                          <div className="pl-8 text-xs text-muted-foreground">(założyciel)</div>
+                        )}
                       </li>
                     ))}
                   </ul>

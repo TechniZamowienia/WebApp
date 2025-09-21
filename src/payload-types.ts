@@ -189,6 +189,19 @@ export interface Order {
       }[]
     | null;
   /**
+   * Per-user carts with delivery/pickup location
+   */
+  carts?:
+    | {
+        userId: string;
+        userName?: string | null;
+        location?: string | null;
+        createdAt?: string | null;
+        updatedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Per-user items added to this order
    */
   items?:
@@ -345,6 +358,16 @@ export interface OrdersSelect<T extends boolean = true> {
     | T
     | {
         name?: T;
+        id?: T;
+      };
+  carts?:
+    | T
+    | {
+        userId?: T;
+        userName?: T;
+        location?: T;
+        createdAt?: T;
+        updatedAt?: T;
         id?: T;
       };
   items?:

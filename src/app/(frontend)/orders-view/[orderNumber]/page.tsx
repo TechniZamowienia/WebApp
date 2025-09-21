@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { deleteOrderById } from '@/actions/delete-order'
 import { addOrderItem, getUserItemSuggestions } from '@/actions/add-order-item'
 import { Input } from '@/components/ui/input'
+import { setCartLocation } from '@/actions/set-cart-location'
+import { currentUser } from '@clerk/nextjs/server'
 
 export default async function OrderViewPage({
   params,
@@ -59,6 +61,12 @@ export default async function OrderViewPage({
         .map((it: any) => [String(it.userId || it.userName), String(it.userName || 'Użytkownik')]),
     ).values(),
   ).map((name) => ({ name }))
+
+  const cu = await currentUser()
+  const viewerId = cu?.id || null
+  const carts: any[] = Array.isArray((doc as any).carts) ? (doc as any).carts : []
+  const yourCart = viewerId ? carts.find((c) => c?.userId === viewerId) : null
+  const yourLocation = yourCart?.location || ''
 
   return (
     <div className="animate-fade-in">
@@ -209,7 +217,6 @@ export default async function OrderViewPage({
                           {pln.format(Number(it.price) || 0)}
                         </span>
                       </li>
-                      //cos
                     ))}
                   </ul>
                 )}
@@ -242,7 +249,68 @@ export default async function OrderViewPage({
               </section>
             </div>
 
-            <div className="space-y-4"></div>
+            <div className="space-y-4">
+              <section className="p-5 bg-muted/20 rounded-xl border border-border/60">
+                <h3 className="font-semibold text-foreground mb-3">Twój koszyk</h3>
+                {viewerId ? (
+                  <form
+                    action={async (formData) => {
+                      'use server'
+                      await setCartLocation(Number(orderNumber), formData)
+                    }}
+                    className="space-y-3"
+                  >
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Miejsce dostarczenia / odbioru
+                      </label>
+                      <Input
+                        name="location"
+                        placeholder="np. Pokój 203, recepcja, klasa 1B"
+                        defaultValue={yourLocation}
+                      />
+                    </div>
+                    <Button type="submit" className="w-full">Zapisz miejsce</Button>
+                    {yourCart?.userName && (
+                      <p className="text-xs text-muted-foreground">
+                        Koszyk: <span className="font-medium">{yourCart.userName}</span>
+                      </p>
+                    )}
+                  </form>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Zaloguj się, aby ustawić miejsce dostarczenia dla swojego koszyka.
+                  </p>
+                )}
+              </section>
+
+              <section className="p-5 bg-muted/20 rounded-xl border border-border/60">
+                <h3 className="font-semibold text-foreground mb-3">Miejsca odbioru</h3>
+                {carts.length === 0 ? (
+                  <p className="text-muted-foreground">Brak koszyków.</p>
+                ) : (
+                  <ul className="divide-y divide-border rounded-md border border-border overflow-hidden">
+                    {carts.map((c, i) => (
+                      <li key={c?.id || c?.userId || i} className="px-3 py-2 bg-card/60">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center justify-center size-6 rounded-full bg-primary/15 text-primary text-xs font-bold">
+                              {(c?.userName || 'U')?.slice(0, 1).toUpperCase()}
+                            </span>
+                            <span className="text-sm font-medium text-foreground">
+                              {c?.userName || 'Użytkownik'}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {c?.location || '—'}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
           </div>
         </CardContent>
       </Card>

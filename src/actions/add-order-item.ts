@@ -3,6 +3,7 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { revalidatePath } from 'next/cache'
+import { ensureUserCart } from '@/actions/set-cart-location'
 import { auth, currentUser } from '@clerk/nextjs/server'
 
 export async function addOrderItem(orderNumber: number, formData: FormData) {
@@ -24,6 +25,9 @@ export async function addOrderItem(orderNumber: number, formData: FormData) {
   })
   const doc = found.docs?.[0]
   if (!doc) return
+
+  // Make sure the user has a cart created (location can be set later)
+  await ensureUserCart(orderNumber)
 
   const nextItems = Array.isArray(doc.items) ? [...doc.items] : []
   nextItems.push({ name, price, userId: userId || 'anonymous', userName, createdAt: now })

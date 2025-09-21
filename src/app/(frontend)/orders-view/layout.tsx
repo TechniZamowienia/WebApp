@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import type { Store } from '@/payload-types'
 import Link from 'next/link'
 import { currentUser } from '@clerk/nextjs/server'
+import { SheetTrigger } from '@/components/ui/sheet'
 import SheetController from './sheet-controller'
 
 export default async function OrdersView({ children }: { children: React.ReactNode }) {
@@ -141,14 +142,16 @@ export default async function OrdersView({ children }: { children: React.ReactNo
                 })()}
               </TableCell>
               <TableCell className="w-full text-right">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 bg-transparent"
-                  asChild
-                >
-                  <Link href={`/orders-view/${order.orderNumber}`}>Szczegóły</Link>
-                </Button>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 bg-transparent"
+                    asChild
+                  >
+                    <Link href={`/orders-view/${order.orderNumber}`}>Szczegóły</Link>
+                  </Button>
+                </SheetTrigger>
               </TableCell>
             </TableRow>
           ))}
@@ -159,10 +162,6 @@ export default async function OrdersView({ children }: { children: React.ReactNo
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6 animate-fade-in">
       <div className="max-w-7xl mx-auto flex flex-col gap-4">
-        {/* <div className="mb-8 animate-slide-up">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Techni Zamowienia</h1>
-          <p className="text-muted-foreground text-lg">Zamów sobie cos nwm </p>
-        </div> */}
         <SheetController tableContent={tableContent}>{children}</SheetController>
       </div>
     </div>

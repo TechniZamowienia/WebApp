@@ -49,6 +49,25 @@ export const Orders: CollectionConfig = {
       ],
     },
     {
+      name: 'carts',
+      label: 'Carts',
+      type: 'array',
+      admin: {
+        description: 'Per-user carts with delivery/pickup location',
+      },
+      fields: [
+        { name: 'userId', type: 'text', required: true },
+        { name: 'userName', type: 'text' },
+        {
+          name: 'location',
+          label: 'Delivery/Pickup location',
+          type: 'text',
+        },
+        { name: 'createdAt', type: 'date' },
+        { name: 'updatedAt', type: 'date' },
+      ],
+    },
+    {
       name: 'items',
       label: 'Items',
       type: 'array',

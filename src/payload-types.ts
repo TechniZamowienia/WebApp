@@ -180,6 +180,8 @@ export interface Order {
   realisationDate?: string | null;
   store?: (number | null) | Store;
   description?: string | null;
+  tax?: number | null;
+  taxType?: ('percentage' | 'fixed') | null;
   participants?:
     | {
         name?: string | null;
@@ -337,6 +339,8 @@ export interface OrdersSelect<T extends boolean = true> {
   realisationDate?: T;
   store?: T;
   description?: T;
+  tax?: T;
+  taxType?: T;
   participants?:
     | T
     | {

@@ -27,6 +27,18 @@ export const Orders: CollectionConfig = {
       type: 'text',
     },
     {
+      name: 'tax',
+      type: 'number',
+    },
+    {
+      name: 'taxType',
+      type: 'select',
+      options: [
+        { label: 'Percentage', value: 'percentage' },
+        { label: 'Fixed', value: 'fixed' },
+      ],
+    },
+    {
       name: 'participants',
       type: 'array',
       fields: [

@@ -99,17 +99,25 @@ export default async function OrderViewPage({
     return null
   })()
 
+  const now = new Date()
+  const isExpired = !!doc.distributionUntil && new Date(doc.distributionUntil) <= now
+
   return (
     <div className="animate-fade-in">
-      <Card className="w-full border-0 shadow-xl bg-card/50 backdrop-blur-sm">
+  <Card className="w-full border-0 shadow-xl bg-card/50 backdrop-blur-sm">
         <CardHeader className="pb-6">
           <div className="flex items-start justify-between gap-4">
             <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-3">
               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
                 <span className="text-primary-foreground font-bold">#</span>
               </div>
-              Order #{doc.orderNumber}
+              Ogłoszenie #{doc.orderNumber}
             </CardTitle>
+            {isExpired && (
+              <span className="text-xs px-2 py-1 rounded-md bg-destructive/10 text-destructive border border-destructive/20">
+                Ogłoszenie wygasło
+              </span>
+            )}
             {/* dev */}
             <div className="flex items-center gap-3">
               {items.length > 0 && (
@@ -127,7 +135,7 @@ export default async function OrderViewPage({
                 }}
               >
                 <Button type="submit" variant="destructive" size="sm" className="hover:shadow-md">
-                  Delete
+                  Usuń
                 </Button>
               </form>
             </div>
@@ -219,6 +227,7 @@ export default async function OrderViewPage({
                   <Button
                     type="submit"
                     className="h-10 px-6 justify-self-start sm:justify-self-auto"
+                    disabled={isExpired}
                   >
                     Dodaj
                   </Button>
@@ -320,7 +329,9 @@ export default async function OrderViewPage({
                         defaultValue={yourLocation}
                       />
                     </div>
-                    <Button type="submit" className="w-full">Zapisz miejsce</Button>
+                    <Button type="submit" className="w-full" disabled={isExpired}>
+                      Zapisz miejsce
+                    </Button>
                     {yourCart?.userName && (
                       <p className="text-xs text-muted-foreground">
                         Koszyk: <span className="font-medium">{yourCart.userName}</span>

@@ -178,6 +178,10 @@ export interface Order {
   founder?: (number | null) | User;
   orderNumber?: number | null;
   realisationDate?: string | null;
+  /**
+   * Moment zakończenia (po tej dacie ogłoszenie znika z listy)
+   */
+  distributionUntil?: string | null;
   store?: (number | null) | Store;
   description?: string | null;
   tax?: number | null;
@@ -189,7 +193,7 @@ export interface Order {
       }[]
     | null;
   /**
-   * Per-user carts with delivery/pickup location
+   * Koszyki użytkowników z miejscem dostawy/odbioru
    */
   carts?:
     | {
@@ -202,7 +206,7 @@ export interface Order {
       }[]
     | null;
   /**
-   * Per-user items added to this order
+   * Pozycje dodane przez użytkowników do ogłoszenia
    */
   items?:
     | {
@@ -350,6 +354,7 @@ export interface OrdersSelect<T extends boolean = true> {
   founder?: T;
   orderNumber?: T;
   realisationDate?: T;
+  distributionUntil?: T;
   store?: T;
   description?: T;
   tax?: T;

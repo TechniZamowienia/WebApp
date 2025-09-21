@@ -18,6 +18,12 @@ export const Orders: CollectionConfig = {
       type: 'date',
     },
     {
+      name: 'distributionUntil',
+      label: 'Aktywne do',
+      type: 'date',
+      admin: { description: 'Moment zakończenia (po tej dacie ogłoszenie znika z listy)' },
+    },
+    {
       name: 'store',
       type: 'relationship',
       relationTo: 'store',
@@ -34,8 +40,8 @@ export const Orders: CollectionConfig = {
       name: 'taxType',
       type: 'select',
       options: [
-        { label: 'Percentage', value: 'percentage' },
-        { label: 'Fixed', value: 'fixed' },
+  { label: 'Procentowo', value: 'percentage' },
+  { label: 'Stała kwota', value: 'fixed' },
       ],
     },
     {
@@ -50,17 +56,17 @@ export const Orders: CollectionConfig = {
     },
     {
       name: 'carts',
-      label: 'Carts',
+      label: 'Koszyki',
       type: 'array',
       admin: {
-        description: 'Per-user carts with delivery/pickup location',
+        description: 'Koszyki użytkowników z miejscem dostawy/odbioru',
       },
       fields: [
         { name: 'userId', type: 'text', required: true },
         { name: 'userName', type: 'text' },
         {
           name: 'location',
-          label: 'Delivery/Pickup location',
+          label: 'Miejsce dostarczenia / odbioru',
           type: 'text',
         },
         { name: 'createdAt', type: 'date' },
@@ -69,10 +75,10 @@ export const Orders: CollectionConfig = {
     },
     {
       name: 'items',
-      label: 'Items',
+      label: 'Pozycje',
       type: 'array',
       admin: {
-        description: 'Per-user items added to this order',
+        description: 'Pozycje dodane przez użytkowników do ogłoszenia',
       },
       fields: [
         { name: 'name', type: 'text', required: true },

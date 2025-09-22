@@ -32,7 +32,8 @@ export async function createOrder(formData: FormData) {
   const taxProvided = taxRaw !== '' && !Number.isNaN(Number(taxRaw))
   const taxTypeValid = taxTypeRaw === 'fixed' || taxTypeRaw === 'percentage'
   const tax = taxProvided && taxTypeValid ? Number(taxRaw) : undefined
-  const taxType: 'fixed' | 'percentage' | undefined = taxProvided && taxTypeValid ? (taxTypeRaw as any) : undefined
+  const taxType: 'fixed' | 'percentage' | undefined =
+    taxProvided && taxTypeValid ? (taxTypeRaw as any) : undefined
 
   let storeId: number | undefined = undefined
   if (selectedStoreId) {
@@ -55,7 +56,7 @@ export async function createOrder(formData: FormData) {
       orderNumber: Number(orderNumber),
       store: storeId,
       realisationDate,
-  distributionUntil: distributionUntil || undefined,
+      distributionUntil: distributionUntil || undefined,
       description,
       tax,
       taxType,

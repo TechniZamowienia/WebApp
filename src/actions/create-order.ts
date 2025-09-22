@@ -27,6 +27,12 @@ export async function createOrder(formData: FormData) {
   ).trim()
   const distributionUntil = (formData.get('distributionUntil')?.toString() || '').trim()
   const description = (formData.get('description')?.toString() || '').trim()
+  const taxRaw = (formData.get('tax')?.toString() || '').trim()
+  const taxTypeRaw = (formData.get('taxType')?.toString() || '').trim()
+  const taxProvided = taxRaw !== '' && !Number.isNaN(Number(taxRaw))
+  const taxTypeValid = taxTypeRaw === 'fixed' || taxTypeRaw === 'percentage'
+  const tax = taxProvided && taxTypeValid ? Number(taxRaw) : undefined
+  const taxType: 'fixed' | 'percentage' | undefined = taxProvided && taxTypeValid ? (taxTypeRaw as any) : undefined
 
   let storeId: number | undefined = undefined
   if (selectedStoreId) {
@@ -51,6 +57,8 @@ export async function createOrder(formData: FormData) {
       realisationDate,
   distributionUntil: distributionUntil || undefined,
       description,
+      tax,
+      taxType,
       participants: [],
       // @ts-ignore founder jest nowym polem dodanym w kolekcji Orders
       founder: await (async () => {

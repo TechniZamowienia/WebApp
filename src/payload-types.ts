@@ -71,6 +71,7 @@ export interface Config {
     media: Media;
     orders: Order;
     store: Store;
+    ratings: Rating;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -81,6 +82,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     store: StoreSelect<false> | StoreSelect<true>;
+    ratings: RatingsSelect<false> | RatingsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -129,6 +131,12 @@ export interface User {
   clerkId?: string | null;
   name: string;
   role: 'oglaszajacy' | 'zamawiajacy';
+  ratingAverage?: number | null;
+  ratingCount?: number | null;
+  /**
+   * Pole pomocnicze do wyliczania średniej
+   */
+  ratingSum?: number | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -240,6 +248,20 @@ export interface Store {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ratings".
+ */
+export interface Rating {
+  id: number;
+  order: number | Order;
+  orderNumber: number;
+  rater: number | User;
+  ratee: number | User;
+  value: number;
+  createdAt: string;
+  updatedAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -260,6 +282,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'store';
         value: number | Store;
+      } | null)
+    | ({
+        relationTo: 'ratings';
+        value: number | Rating;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -311,6 +337,9 @@ export interface UsersSelect<T extends boolean = true> {
   clerkId?: T;
   name?: T;
   role?: T;
+  ratingAverage?: T;
+  ratingCount?: T;
+  ratingSum?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -403,6 +432,19 @@ export interface StoreSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ratings_select".
+ */
+export interface RatingsSelect<T extends boolean = true> {
+  order?: T;
+  orderNumber?: T;
+  rater?: T;
+  ratee?: T;
+  value?: T;
+  createdAt?: T;
+  updatedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

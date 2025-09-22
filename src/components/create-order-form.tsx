@@ -21,6 +21,8 @@ export default function CreateOrderForm({
   const [newStoreName, setNewStoreName] = useState<string>('')
   const [realisationDate, setRealisationDate] = useState<string>('')
   const [distributionUntil, setDistributionUntil] = useState<string>('')
+  const [taxType, setTaxType] = useState<'none' | 'percentage' | 'fixed'>('none')
+  const [taxValue, setTaxValue] = useState<string>('')
   const hasRealisation = !!realisationDate
   const hasUntil = !!distributionUntil
   const invalidEnd = hasRealisation && hasUntil && new Date(distributionUntil) <= new Date(realisationDate)
@@ -132,6 +134,44 @@ export default function CreateOrderForm({
             placeholder="Wpisz opis ogłoszenia"
             className="bg-background border-border/50 focus:border-primary transition-all duration-200"
           />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">Podatek (opcjonalnie)</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <Select
+                value={taxType}
+                onValueChange={(v) => setTaxType((v as 'none' | 'percentage' | 'fixed') ?? 'none')}
+              >
+                <SelectTrigger className="w-full bg-background border-border/50 focus:border-primary transition-all duration-200 hover:bg-muted/30">
+                  <SelectValue placeholder="Typ podatku" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border/50 shadow-lg">
+                  <SelectItem value="none">Brak</SelectItem>
+                  <SelectItem value="percentage">Procentowy (%)</SelectItem>
+                  <SelectItem value="fixed">Stała kwota (PLN)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="relative">
+              <Input
+                type="number"
+                name="tax"
+                placeholder={taxType === 'fixed' ? 'np. 7.50' : 'np. 5'}
+                min="0"
+                step="0.01"
+                value={taxValue}
+                onChange={(e) => setTaxValue(e.target.value)}
+                disabled={taxType === 'none'}
+                className="bg-background border-border/50 focus:border-primary transition-all duration-200 pr-12"
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                {taxType === 'fixed' ? 'PLN' : '%'}
+              </span>
+            </div>
+          </div>
+          <input type="hidden" name="taxType" value={taxType === 'none' || !taxValue ? '' : taxType} />
         </div>
 
         <Button

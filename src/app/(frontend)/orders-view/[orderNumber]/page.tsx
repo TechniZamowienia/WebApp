@@ -57,6 +57,36 @@ export default async function OrderViewPage({
   const pln = new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' })
   const items = Array.isArray(doc.items) ? doc.items : []
   const totalPrice = items.reduce((sum: number, it: any) => sum + (Number(it?.price) || 0), 0)
+  // Optional tax set on the order (percentage or fixed), applied per użytkownik/koszyk
+  const taxType: 'percentage' | 'fixed' | '' =
+    String(doc?.taxType || '') === 'percentage'
+      ? 'percentage'
+      : String(doc?.taxType || '') === 'fixed'
+        ? 'fixed'
+        : ''
+  const taxValue = Number.isFinite(Number(doc?.tax)) ? Number(doc.tax) : 0
+  // Organizer: total of all carts with tax per cart; Participant: total of their cart with tax
+  const groupsMap = items.reduce(
+    (map: Map<string, number>, it: any) => {
+      const uid = String(it?.userId || 'unknown')
+      const price = Number(it?.price) || 0
+      map.set(uid, (map.get(uid) || 0) + price)
+      return map
+    },
+    new Map<string, number>(),
+  )
+  const organizerTotalWithTax = (Array.from(groupsMap.values()) as number[]).reduce(
+    (sum: number, subtotal: number) => {
+      const taxAmt =
+        taxType === 'percentage'
+          ? (subtotal * taxValue) / 100
+          : taxType === 'fixed'
+          ? taxValue
+          : 0
+      return sum + subtotal + taxAmt
+    },
+    0,
+  )
   const uniqueParticipantsFromItems = Array.from(
     new Map(
       items
@@ -139,6 +169,33 @@ export default async function OrderViewPage({
       : {}
 
   const isParticipant = !!viewerId && participantClerkIds.includes(String(viewerId))
+  const participantSubtotal = viewerId
+    ? items
+        .filter((it: any) => String(it?.userId || '') === String(viewerId))
+        .reduce((s: number, it: any) => s + (Number(it?.price) || 0), 0)
+    : 0
+  const participantTax =
+    taxType === 'percentage'
+      ? (participantSubtotal * taxValue) / 100
+      : taxType === 'fixed'
+      ? participantSubtotal > 0
+        ? taxValue
+        : 0
+      : 0
+  const participantTotalWithTax = participantSubtotal + participantTax
+  const headerSum = isFounder
+    ? organizerTotalWithTax
+    : isParticipant
+    ? participantTotalWithTax
+    : 0
+  const headerNet = isFounder ? totalPrice : isParticipant ? participantSubtotal : 0
+  const headerTax = isFounder ? Math.max(0, organizerTotalWithTax - totalPrice) : isParticipant ? participantTax : 0
+  const headerTooltip =
+    (taxType === 'percentage' || taxType === 'fixed') && headerNet > 0
+      ? taxType === 'percentage'
+        ? `Suma netto: ${pln.format(headerNet)} + Tax ${taxValue}%: ${pln.format(headerTax)} = Razem: ${pln.format(headerSum)}`
+        : `Suma netto: ${pln.format(headerNet)} + Tax: ${pln.format(headerTax)} = Razem: ${pln.format(headerSum)}`
+      : ''
 
   const ratingsByViewerRes = viewerPayloadId
     ? await payload.find({
@@ -181,9 +238,12 @@ export default async function OrderViewPage({
             )}
             {/* dev */}
             <div className="flex items-center gap-3">
-              {items.length > 0 && (
-                <span className="text-xs px-2 py-1 rounded-md bg-primary/10 text-primary border border-primary/20">
-                  Suma: {pln.format(totalPrice)}
+              {items.length > 0 && (isFounder || isParticipant) && (
+                <span
+                  className="text-xs px-2 py-1 rounded-md bg-primary/10 text-primary border border-primary/20"
+                  title={headerTooltip || undefined}
+                >
+                  Suma: {pln.format(headerSum)}
                 </span>
               )}
               <span className="text-xs px-2 py-1 rounded-md bg-muted/60 text-muted-foreground border">
@@ -226,7 +286,13 @@ export default async function OrderViewPage({
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                       Podatek
                     </dt>
-                    <dd className="text-sm text-foreground">{doc.tax || '—'}</dd>
+                    <dd className="text-sm text-foreground">
+                      {taxType === 'percentage'
+                        ? `${taxValue}%`
+                        : taxType === 'fixed'
+                        ? pln.format(taxValue)
+                        : '—'}
+                    </dd>
                   </div>
                 </dl>
               </section>
@@ -301,25 +367,111 @@ export default async function OrderViewPage({
                 <h3 className="font-semibold text-foreground mb-3">Produkty</h3>
                 {items.length === 0 ? (
                   <p className="text-muted-foreground">Brak produktów. Dodaj pierwszy poniżej.</p>
+                ) : isFounder ? (
+                  // ORGANIZATOR: grupowanie na koszyki użytkowników (po Clerk userId)
+                  <div className="space-y-2">
+                    {(Array.from(
+                      items
+                        .reduce(
+                          (
+                            map: Map<string, { userId: string; userName: string; items: any[] }>,
+                            it: any,
+                          ) => {
+                            const uid = String(it?.userId || 'unknown')
+                            const name = String(it?.userName || 'Użytkownik')
+                            if (!map.has(uid)) map.set(uid, { userId: uid, userName: name, items: [] })
+                            map.get(uid)!.items.push(it)
+                            return map
+                          },
+                          new Map<string, { userId: string; userName: string; items: any[] }>(),
+                        )
+            .values(),
+          ) as Array<{ userId: string; userName: string; items: any[] }>).map((group, i) => {
+                      const subtotal = group.items.reduce((s: number, it: any) => s + (Number(it?.price) || 0), 0)
+                      const taxAmt = taxType === 'percentage' ? (subtotal * taxValue) / 100 : taxType === 'fixed' ? taxValue : 0
+                      const total = subtotal + taxAmt
+                      return (
+                        <details key={group.userId || i} className="rounded-md border border-border bg-card/50">
+                          <summary className="flex items-center gap-3 px-3 py-2 cursor-pointer select-none">
+                            <span className="inline-flex items-center justify-center size-6 rounded-full bg-primary/15 text-primary text-xs font-bold">
+                              {(group.userName || 'U')?.slice(0, 1).toUpperCase()}
+                            </span>
+                            <span className="text-sm font-medium text-foreground">Koszyk: {group.userName || 'Użytkownik'}</span>
+                            <span className="ml-auto text-xs text-muted-foreground">
+                              {taxType === 'percentage' && taxValue > 0 ? (
+                                <>
+                                  Suma: {pln.format(subtotal)} + Tax {taxValue}%: {pln.format(taxAmt)} = <span className="font-semibold text-foreground">{pln.format(total)}</span>
+                                </>
+                              ) : taxType === 'fixed' && taxValue > 0 ? (
+                                <>
+                                  Suma: {pln.format(subtotal)} + Tax {pln.format(taxValue)} = <span className="font-semibold text-foreground">{pln.format(total)}</span>
+                                </>
+                              ) : (
+                                <>
+                                  Suma: <span className="font-semibold text-foreground">{pln.format(subtotal)}</span>
+                                </>
+                              )}
+                            </span>
+                          </summary>
+                          <ul className="divide-y divide-border">
+                            {group.items.map((it: any, idx: number) => (
+                              <li key={idx} className="flex items-center justify-between gap-4 px-3 py-2 bg-card/60 odd:bg-card/40">
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-foreground">{it.name}</span>
+                                  <span className="text-xs text-muted-foreground">{group.userName}</span>
+                                </div>
+                                <span className="text-sm text-foreground font-semibold">{pln.format(Number(it.price) || 0)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
+                      )
+                    })}
+                  </div>
                 ) : (
-                  <ul className="divide-y divide-border rounded-md border border-border overflow-hidden max-h-64 overflow-y-auto [scrollbar-width:thin]">
-                    {items.map((it: any, idx: number) => (
-                      <li
-                        key={idx}
-                        className="flex items-center justify-between gap-4 px-3 py-2 bg-card/60 odd:bg-card/40"
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-foreground">{it.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {it.userName || '—'}
-                          </span>
+                  // UCZESTNIK: widzi tylko swoje produkty i sumę + ewentualny podatek
+                  (() => {
+                    const myItems = viewerId ? items.filter((it: any) => String(it?.userId || '') === String(viewerId)) : []
+                    const subtotal = myItems.reduce((s: number, it: any) => s + (Number(it?.price) || 0), 0)
+                    const taxAmt = taxType === 'percentage' ? (subtotal * taxValue) / 100 : taxType === 'fixed' ? taxValue : 0
+                    const total = subtotal + taxAmt
+                    return (
+                      <div className="space-y-2">
+                        {myItems.length === 0 ? (
+                          <p className="text-muted-foreground">Nie masz jeszcze produktów w tym ogłoszeniu.</p>
+                        ) : (
+                          <ul className="divide-y divide-border rounded-md border border-border overflow-hidden max-h-64 overflow-y-auto [scrollbar-width:thin]">
+                            {myItems.map((it: any, idx: number) => (
+                              <li key={idx} className="flex items-center justify-between gap-4 px-3 py-2 bg-card/60 odd:bg-card/40">
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-foreground">{it.name}</span>
+                                </div>
+                                <span className="text-sm text-foreground font-semibold">{pln.format(Number(it.price) || 0)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <div className="text-sm text-foreground flex flex-wrap items-center gap-3 pt-1">
+                          <span>Twoja suma:</span>
+                          <span className="font-medium">{pln.format(subtotal)}</span>
+                          {taxType === 'percentage' && taxValue > 0 && (
+                            <>
+                              <span className="text-muted-foreground">+ Tax {taxValue}%:</span>
+                              <span className="font-medium">{pln.format(taxAmt)}</span>
+                            </>
+                          )}
+                          {taxType === 'fixed' && taxValue > 0 && (
+                            <>
+                              <span className="text-muted-foreground">+ Tax:</span>
+                              <span className="font-medium">{pln.format(taxValue)}</span>
+                            </>
+                          )}
+                          <span className="text-muted-foreground">Razem do zapłaty:</span>
+                          <span className="font-semibold">{pln.format(total)}</span>
                         </div>
-                        <span className="text-sm text-foreground font-semibold">
-                          {pln.format(Number(it.price) || 0)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                      </div>
+                    )
+                  })()
                 )}
               </section>
               {isExpired && isFounder && participantUsers.length > 0 && (

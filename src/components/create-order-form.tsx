@@ -25,7 +25,8 @@ export default function CreateOrderForm({
   const [taxValue, setTaxValue] = useState<string>('')
   const hasRealisation = !!realisationDate
   const hasUntil = !!distributionUntil
-  const invalidEnd = hasRealisation && hasUntil && new Date(distributionUntil) <= new Date(realisationDate)
+  const invalidEnd =
+    hasRealisation && hasUntil && new Date(distributionUntil) <= new Date(realisationDate)
   const stores = props.stores
   const orderNumber = props.orders.length + 1
 
@@ -111,7 +112,9 @@ export default function CreateOrderForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Aktywne do (koniec dystrybucji)</label>
+          <label className="text-sm font-medium text-foreground">
+            Aktywne do (koniec dystrybucji)
+          </label>
           <Input
             type="datetime-local"
             name="distributionUntil"
@@ -122,7 +125,9 @@ export default function CreateOrderForm({
             className="bg-background border-border/50 focus:border-primary transition-all duration-200"
           />
           {invalidEnd && (
-            <p className="text-xs text-destructive">Czas zakończenia musi być po dacie realizacji.</p>
+            <p className="text-xs text-destructive">
+              Czas zakończenia musi być po dacie realizacji.
+            </p>
           )}
         </div>
 
@@ -171,7 +176,11 @@ export default function CreateOrderForm({
               </span>
             </div>
           </div>
-          <input type="hidden" name="taxType" value={taxType === 'none' || !taxValue ? '' : taxType} />
+          <input
+            type="hidden"
+            name="taxType"
+            value={taxType === 'none' || !taxValue ? '' : taxType}
+          />
         </div>
 
         <Button
@@ -186,15 +195,15 @@ export default function CreateOrderForm({
             invalidEnd
           }
         >
-      {isSubmitting ? (
+          {isSubmitting ? (
             <>
               <Loader2Icon className="animate-spin" />
-        Proszę czekać
+              Proszę czekać
             </>
           ) : (
             <>
               <PlusIcon />
-        Utwórz ogłoszenie
+              Utwórz ogłoszenie
             </>
           )}
         </Button>

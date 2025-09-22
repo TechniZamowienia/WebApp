@@ -46,5 +46,26 @@ export const Users: CollectionConfig = {
       defaultValue: 'zamawiajacy',
       required: true,
     },
+    {
+      name: 'ratingAverage',
+      label: 'Średnia ocena',
+      type: 'number',
+      defaultValue: 0,
+      admin: { position: 'sidebar' },
+    },
+    {
+      name: 'ratingCount',
+      label: 'Liczba ocen',
+      type: 'number',
+      defaultValue: 0,
+      admin: { position: 'sidebar' },
+    },
+    {
+      name: 'ratingSum',
+      label: 'Suma ocen (wewn.)',
+      type: 'number',
+      defaultValue: 0,
+      admin: { position: 'sidebar', description: 'Pole pomocnicze do wyliczania średniej' },
+    },
   ],
 }

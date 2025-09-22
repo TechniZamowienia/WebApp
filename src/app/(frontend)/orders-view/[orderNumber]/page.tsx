@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { deleteOrderById } from '@/actions/delete-order'
 import { addOrderItem, getUserItemSuggestions } from '@/actions/add-order-item'
+import { rateUser } from '@/actions/rate-user'
 import { Input } from '@/components/ui/input'
 import { setCartLocation } from '@/actions/set-cart-location'
 import { currentUser } from '@clerk/nextjs/server'
@@ -75,14 +76,17 @@ export default async function OrderViewPage({
   const yourLocation = yourCart?.location || ''
 
   const viewerUserRes = viewerId
-    ? await payload.find({ collection: 'users', where: { clerkId: { equals: viewerId } }, limit: 1 })
+    ? await payload.find({
+        collection: 'users',
+        where: { clerkId: { equals: viewerId } },
+        limit: 1,
+      })
     : null
   const viewerPayloadId: number | undefined = (viewerUserRes?.docs?.[0] as any)?.id
   const founderId: number | undefined =
     typeof doc.founder === 'number' ? doc.founder : (doc.founder as any)?.id
   const isFounder = !!viewerPayloadId && !!founderId && viewerPayloadId === founderId
 
-  // Compute founder's Clerk ID to match against item.userId / cart.userId
   const founderClerkId: string | null = await (async () => {
     if (!doc?.founder) return null
     if (typeof doc.founder === 'object' && (doc.founder as any)?.clerkId) {
@@ -102,9 +106,66 @@ export default async function OrderViewPage({
   const now = new Date()
   const isExpired = !!doc.distributionUntil && new Date(doc.distributionUntil) <= now
 
+  const participantClerkIds = Array.from(
+    new Set<string>(items.map((it: any) => String(it?.userId || '')).filter(Boolean)),
+  )
+  const participantUsersRes =
+    participantClerkIds.length > 0
+      ? await payload.find({
+          collection: 'users',
+          where: { clerkId: { in: participantClerkIds } },
+          limit: 200,
+        })
+      : { docs: [] as any[] }
+  const participantUsers = (participantUsersRes.docs || []).map((u: any) => ({
+    id: u?.id as number,
+    name: u?.name as string,
+    ratingAverage: Number(u?.ratingAverage || 0),
+    ratingCount: Number(u?.ratingCount || 0),
+    clerkId: String(u?.clerkId || ''),
+  }))
+
+  const founderUserRes = founderId
+    ? await payload.find({ collection: 'users', where: { id: { equals: founderId } }, limit: 1 })
+    : null
+  const founderUser: { id?: number; name?: string; ratingAverage?: number; ratingCount?: number } =
+    founderUserRes
+      ? {
+          id: (founderUserRes.docs?.[0] as any)?.id,
+          name: (founderUserRes.docs?.[0] as any)?.name,
+          ratingAverage: Number((founderUserRes.docs?.[0] as any)?.ratingAverage || 0),
+          ratingCount: Number((founderUserRes.docs?.[0] as any)?.ratingCount || 0),
+        }
+      : {}
+
+  const isParticipant = !!viewerId && participantClerkIds.includes(String(viewerId))
+
+  const ratingsByViewerRes = viewerPayloadId
+    ? await payload.find({
+        collection: 'ratings',
+        where: {
+          and: [
+            { orderNumber: { equals: Number(orderNumber) } },
+            { rater: { equals: Number(viewerPayloadId) } },
+          ],
+        },
+        limit: 200,
+      })
+    : null
+  const alreadyRatedIds = new Set<number>(
+    (ratingsByViewerRes?.docs || []).map((r: any) =>
+      typeof r?.ratee === 'number' ? (r.ratee as number) : Number((r?.ratee as any)?.id || 0),
+    ),
+  )
+  const organizerAlreadyRated = founderId ? alreadyRatedIds.has(Number(founderId)) : false
+  const rateableParticipants = participantUsers.filter(
+    (p) => typeof p.id === 'number' && p.id !== founderId && !alreadyRatedIds.has(Number(p.id)),
+  )
+  const defaultRateeId = rateableParticipants.length > 0 ? String(rateableParticipants[0].id) : ''
+
   return (
     <div className="animate-fade-in">
-  <Card className="w-full border-0 shadow-xl bg-card/50 backdrop-blur-sm">
+      <Card className="w-full border-0 shadow-xl bg-card/50 backdrop-blur-sm">
         <CardHeader className="pb-6">
           <div className="flex items-start justify-between gap-4">
             <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-3">
@@ -261,6 +322,59 @@ export default async function OrderViewPage({
                   </ul>
                 )}
               </section>
+              {isExpired && isFounder && participantUsers.length > 0 && (
+                <section id="ocen" className="p-5 bg-muted/20 rounded-xl border border-border/60">
+                  <h3 className="font-semibold text-foreground mb-3">Oceń uczestnika</h3>
+                  <form
+                    action={async (formData) => {
+                      'use server'
+                      const val = Number(formData.get('rating') || 0)
+                      const ratee = Number(formData.get('ratee') || 0)
+                      if (ratee && val >= 1 && val <= 5) {
+                        await rateUser(Number(orderNumber), ratee, val)
+                      }
+                    }}
+                    className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 rounded-md border bg-card/50"
+                  >
+                    <div className="flex-1 flex items-center gap-2">
+                      <label className="text-xs font-medium text-muted-foreground min-w-28">
+                        Uczestnik
+                      </label>
+                      <select
+                        name="ratee"
+                        className="h-9 rounded-md border bg-background px-2 text-sm w-full"
+                        defaultValue={defaultRateeId}
+                        required
+                        disabled={rateableParticipants.length === 0}
+                      >
+                        {rateableParticipants.map((p) => (
+                          <option key={p.id} value={String(p.id)}>
+                            {p.name} (Śr. {Number(p.ratingAverage || 0).toFixed(2)} /{' '}
+                            {Number(p.ratingCount || 0)})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        name="rating"
+                        className="h-9 rounded-md border bg-background px-2 text-sm"
+                        defaultValue={5}
+                        disabled={rateableParticipants.length === 0}
+                      >
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                      <Button type="submit" size="sm" disabled={rateableParticipants.length === 0}>
+                        Oceń
+                      </Button>
+                    </div>
+                  </form>
+                </section>
+              )}
               <section className="p-5 bg-muted/20 rounded-xl border border-border/60">
                 <h3 className="font-semibold text-foreground mb-3">Uczestnicy</h3>
                 <div className="flex flex-wrap gap-2">
@@ -271,7 +385,7 @@ export default async function OrderViewPage({
                     (uniqueParticipantsFromItems.length > 0
                       ? uniqueParticipantsFromItems
                       : participants
-          ).map((p: any, index: number) => (
+                    ).map((p: any, index: number) => (
                       <span
                         key={p?.id || `${p?.name}-${index}`}
                         className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border bg-card/60"
@@ -280,11 +394,34 @@ export default async function OrderViewPage({
                           {(p?.name || 'U')?.slice(0, 1).toUpperCase()}
                         </span>
                         <span className="flex items-center gap-2">
-                          <span>
-                            {p?.name || '—'}
-                            {p?.id && founderClerkId && p.id === founderClerkId && (
-                              <span className="text-muted-foreground"> (założyciel)</span>
-                            )}
+                          <span className="flex items-center gap-1">
+                            <span>
+                              {p?.name || '—'}
+                              {p?.id && founderClerkId && p.id === founderClerkId && (
+                                <span className="text-muted-foreground"> (założyciel)</span>
+                              )}
+                            </span>
+                            {(() => {
+                              const match = participantUsers.find(
+                                (u) => p?.id && u.clerkId && String(p.id) === String(u.clerkId),
+                              )
+                              if (!match) return null
+                              const avg = Number(match.ratingAverage || 0)
+                              const count = Number(match.ratingCount || 0)
+                              const full = Math.floor(Math.max(0, Math.min(5, avg)))
+                              const empty = 5 - full
+                              return (
+                                <span className="ml-1 text-xs text-muted-foreground">
+                                  <span className="text-amber-500">{'★'.repeat(full)}</span>
+                                  <span className="text-muted-foreground/40">
+                                    {'☆'.repeat(empty)}
+                                  </span>
+                                  <span className="ml-1">
+                                    ({avg.toFixed(2)} / {count})
+                                  </span>
+                                </span>
+                              )
+                            })()}
                           </span>
                           {isFounder && p?.id && p.id !== viewerId && (
                             <form
@@ -293,7 +430,12 @@ export default async function OrderViewPage({
                                 await removeOrderUser(Number(orderNumber), String(p.id))
                               }}
                             >
-                              <Button type="submit" size="icon" variant="destructive" className="size-6">
+                              <Button
+                                type="submit"
+                                size="icon"
+                                variant="destructive"
+                                className="size-6"
+                              >
                                 <Trash2Icon className="size-4" />
                               </Button>
                             </form>
@@ -376,6 +518,61 @@ export default async function OrderViewPage({
                   </ul>
                 )}
               </section>
+              {isExpired && isParticipant && !isFounder && founderUser?.id && (
+                <section id="ocen" className="p-5 bg-muted/20 rounded-xl border border-border/60">
+                  <h3 className="font-semibold text-foreground mb-3">Oceń organizatora</h3>
+                  <form
+                    action={async (formData) => {
+                      'use server'
+                      const val = Number(formData.get('rating') || 0)
+                      await rateUser(Number(orderNumber), Number(founderUser.id), val)
+                    }}
+                    className="flex items-center justify-between gap-3 p-3 rounded-md border bg-card/50"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-foreground">
+                        {founderUser?.name || 'Organizator'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Śr.: {Number(founderUser?.ratingAverage || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        name="rating"
+                        className="h-9 rounded-md border bg-background px-2 text-sm"
+                        defaultValue={5}
+                        disabled={organizerAlreadyRated}
+                      >
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        type="submit"
+                        className="min-w-20"
+                        size="sm"
+                        disabled={organizerAlreadyRated}
+                      >
+                        Oceń
+                      </Button>
+                    </div>
+                    <div className="w-full text-right text-xs text-muted-foreground">
+                      <span>
+                        Średnia: {Number(founderUser?.ratingAverage || 0).toFixed(2)} (
+                        {Number(founderUser?.ratingCount || 0)} ocen)
+                      </span>
+                      {organizerAlreadyRated && (
+                        <div className="mt-1 text-amber-600">
+                          Już oceniłeś tego organizatora w tym ogłoszeniu.
+                        </div>
+                      )}
+                    </div>
+                  </form>
+                </section>
+              )}
             </div>
           </div>
         </CardContent>

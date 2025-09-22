@@ -11,6 +11,7 @@ import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Orders } from './collections/Orders'
 import { Store } from './collections/Store'
+import { Ratings } from './collections/Ratings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -22,7 +23,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Orders, Store],
+  collections: [Users, Media, Orders, Store, Ratings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'dev-secret-change-me',
   typescript: {
@@ -30,9 +31,7 @@ export default buildConfig({
   },
   db: sqliteAdapter({
     client: {
-      url:
-        process.env.DATABASE_URI ||
-        `file:${path.resolve(dirname, '../.payload/data.db')}`,
+      url: process.env.DATABASE_URI || `file:${path.resolve(dirname, '../.payload/data.db')}`,
     },
   }),
   sharp,

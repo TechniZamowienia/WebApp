@@ -43,17 +43,71 @@ export default async function HistoriaPage() {
     : []
 
   const tookPartRes = await payload.find({ collection: 'orders', limit: 200 })
+  const nowISO = new Date().toISOString()
+
+  const isClosed = (o: any) => {
+    const until = (o as any).distributionUntil as string | undefined
+    return !!until && until <= nowISO
+  }
+
   const tookPart = (tookPartRes.docs || []).filter((o: any) => {
     const items = (o as any).items as any[] | undefined
     if (!Array.isArray(items)) return false
-    return items.some((it) => String(it?.userId || '') === String(userId))
+    return isClosed(o) && items.some((it) => String(it?.userId || '') === String(userId))
   })
+
+  const createdByMeClosed = (createdByMeDocs || []).filter(isClosed)
+
+  const founderIds = new Set<number>()
+  for (const o of createdByMeClosed) {
+    const f = (o as any).founder
+    const id = typeof f === 'number' ? f : (f as any)?.id
+    if (typeof id === 'number') founderIds.add(id)
+  }
+  for (const o of tookPart) {
+    const f = (o as any).founder
+    const id = typeof f === 'number' ? f : (f as any)?.id
+    if (typeof id === 'number') founderIds.add(id)
+  }
+
+  const foundersRes = founderIds.size
+    ? await payload.find({
+        collection: 'users',
+        where: { id: { in: Array.from(founderIds) } },
+        limit: 200,
+      })
+    : { docs: [] as any[] }
+  const foundersById = new Map<number, any>()
+  for (const u of foundersRes.docs || []) {
+    if (typeof (u as any)?.id === 'number') foundersById.set((u as any).id as number, u)
+  }
+
+  // Tiny helper to render stars
+  function Stars({ avg, count }: { avg: number; count: number }) {
+    const full = Math.floor(Math.max(0, Math.min(5, avg)))
+    const empty = 5 - full
+    return (
+      <span className="ml-1 text-xs text-muted-foreground">
+        <span className="text-amber-500">{'★'.repeat(full)}</span>
+        <span className="text-muted-foreground/40">{'☆'.repeat(empty)}</span>
+        <span className="ml-1">
+          ({avg.toFixed(2)} / {count})
+        </span>
+      </span>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6 animate-fade-in">
       <div className="max-w-7xl mx-auto flex flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-foreground">Historia</h1>
+          <Button variant="outline" asChild>
+            <Link href="/orders-view">Powrót do strony głównej</Link>
+          </Button>
+        </div>
         <div>
-          <h2 className="text-3xl font-bold mb-6 text-foreground">Moje ogłoszenia</h2>
+          <h2 className="text-3xl font-bold mb-6 text-foreground">Moje ogłoszenia (zakończone)</h2>
           <div className="bg-card/70 backdrop-blur-xl rounded-2xl shadow-lg border border-border overflow-hidden animate-scale-in">
             <Table className="w-full">
               <TableHeader>
@@ -78,7 +132,7 @@ export default async function HistoriaPage() {
                 </TableRow>
               </TableHeader>
               <TableBody className="max-h-[60vh] overflow-y-auto w-full">
-                {(createdByMeDocs || []).map((o: any, index: number) => (
+                {createdByMeClosed.map((o: any, index: number) => (
                   <TableRow
                     key={o.id}
                     className="hover:bg-muted/30 transition-all duration-200 animate-fade-in w-full"
@@ -105,9 +159,28 @@ export default async function HistoriaPage() {
                       {o.description || '-'}
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-600 border border-red-500/20">
-                        Moje Ogłoszenie
-                      </span>
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-600 border border-red-500/20">
+                          Moje Ogłoszenie
+                        </span>
+                        {(() => {
+                          const f = (o as any).founder
+                          const id = typeof f === 'number' ? f : (f as any)?.id
+                          const fu = typeof id === 'number' ? foundersById.get(id) : undefined
+                          if (!fu) return null
+                          const avg = Number((fu as any)?.ratingAverage || 0)
+                          const count = Number((fu as any)?.ratingCount || 0)
+                          return (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <span>Organizator:</span>
+                              <span className="font-medium text-foreground">
+                                {(fu as any)?.name || '—'}
+                              </span>
+                              <Stars avg={avg} count={count} />
+                            </div>
+                          )
+                        })()}
+                      </div>
                     </TableCell>
                     <TableCell className="w-full text-center">
                       {(() => {
@@ -136,6 +209,14 @@ export default async function HistoriaPage() {
                       >
                         <Link href={`/orders-view/${o.orderNumber}`}>Szczegóły</Link>
                       </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="ml-2 hover:scale-105 transition-all duration-200"
+                        asChild
+                      >
+                        <Link href={`/orders-view/${o.orderNumber}#ocen`}>Oceń</Link>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -145,7 +226,9 @@ export default async function HistoriaPage() {
         </div>
 
         <div>
-          <h2 className="text-3xl font-bold mb-6 text-foreground">W których brałem udział</h2>
+          <h2 className="text-3xl font-bold mb-6 text-foreground">
+            W których brałem udział (zakończone)
+          </h2>
           <div className="bg-card/70 backdrop-blur-xl rounded-2xl shadow-lg border border-border overflow-hidden animate-scale-in">
             <Table className="w-full">
               <TableHeader>
@@ -197,9 +280,28 @@ export default async function HistoriaPage() {
                       {o.description || '-'}
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20">
-                        Wzięto udział
-                      </span>
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                          Wzięto udział
+                        </span>
+                        {(() => {
+                          const f = (o as any).founder
+                          const id = typeof f === 'number' ? f : (f as any)?.id
+                          const fu = typeof id === 'number' ? foundersById.get(id) : undefined
+                          if (!fu) return null
+                          const avg = Number((fu as any)?.ratingAverage || 0)
+                          const count = Number((fu as any)?.ratingCount || 0)
+                          return (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <span>Organizator:</span>
+                              <span className="font-medium text-foreground">
+                                {(fu as any)?.name || '—'}
+                              </span>
+                              <Stars avg={avg} count={count} />
+                            </div>
+                          )
+                        })()}
+                      </div>
                     </TableCell>
                     <TableCell className="w-full text-center">
                       {(() => {
@@ -227,6 +329,14 @@ export default async function HistoriaPage() {
                         asChild
                       >
                         <Link href={`/orders-view/${o.orderNumber}`}>Szczegóły</Link>
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="ml-2 hover:scale-105 transition-all duration-200"
+                        asChild
+                      >
+                        <Link href={`/orders-view/${o.orderNumber}#ocen`}>Oceń</Link>
                       </Button>
                     </TableCell>
                   </TableRow>
